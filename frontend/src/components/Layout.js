@@ -22,7 +22,16 @@ import {
   Bell,
   User,
   Brain,
-  LogOut
+  LogOut,
+  Calculator,
+  Download,
+  Calendar,
+  Users,
+  Search,
+  GitBranch,
+  Dice6,
+  Building2,
+  Wallet
 } from 'lucide-react';
 
 const navItems = [
@@ -56,6 +65,21 @@ const navItems = [
     { path: '/custom-reports', icon: FileSpreadsheet, label: 'Custom Reports' },
     { path: '/audit-logs', icon: History, label: 'Audit Logs' },
   ]},
+  { section: 'Advanced Analytics', items: [
+    { path: '/financial-ratios', icon: Calculator, label: 'Financial Ratios' },
+    { path: '/natural-language-query', icon: Search, label: 'NL Query' },
+    { path: '/peer-comparison', icon: Users, label: 'Peer Comparison' },
+    { path: '/export-data', icon: Download, label: 'Export Data' },
+    { path: '/scheduled-reports', icon: Calendar, label: 'Scheduled Reports' },
+  ]},
+  { section: 'Advanced Modeling', items: [
+    { path: '/scenario-analysis', icon: GitBranch, label: 'Scenario Analysis' },
+    { path: '/dcf-valuation', icon: Calculator, label: 'DCF Valuation' },
+    { path: '/monte-carlo', icon: Dice6, label: 'Monte Carlo' },
+    { path: '/capital-budgeting', icon: Building2, label: 'Capital Budgeting' },
+    { path: '/break-even', icon: Target, label: 'Break-Even' },
+    { path: '/working-capital', icon: Wallet, label: 'Working Capital' },
+  ]},
 ];
 
 const pageNames = {
@@ -78,6 +102,17 @@ const pageNames = {
   '/tax-reports': 'Tax Reports',
   '/generate-report': 'Generate Final Report',
   '/profile': 'User Profile',
+  '/financial-ratios': 'Financial Ratios',
+  '/natural-language-query': 'Natural Language Query',
+  '/peer-comparison': 'Peer Comparison',
+  '/export-data': 'Export Data',
+  '/scheduled-reports': 'Scheduled Reports',
+  '/scenario-analysis': 'Scenario Analysis',
+  '/dcf-valuation': 'DCF Valuation',
+  '/monte-carlo': 'Monte Carlo Simulation',
+  '/capital-budgeting': 'Capital Budgeting',
+  '/break-even': 'Break-Even Analysis',
+  '/working-capital': 'Working Capital Optimizer',
 };
 
 function Layout({ children, user, onLogout }) {

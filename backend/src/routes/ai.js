@@ -394,7 +394,11 @@ Provide: 1. Executive summary 2. Key metrics to track 3. Recommended visualizati
     ];
 
     const analysis = await callOpenRouter(messages);
-    await pool.query('UPDATE custom_reports SET ai_content = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2', [analysis, report_id]);
+    // Save AI analysis to database
+    await pool.query(
+      'UPDATE custom_reports SET ai_content = $1, ai_generated = true, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [analysis, report_id]
+    );
     res.json({ analysis, report_id });
   } catch (error) {
     console.error('Error analyzing custom report:', error);

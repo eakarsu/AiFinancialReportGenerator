@@ -60,8 +60,9 @@ function FormModal({ isOpen, onClose, title, fields, onSubmit, initialData = {} 
               backgroundColor: 'white'
             }}
           >
+            <option value="">Select {field.label}...</option>
             {(!field.options || field.options.length === 0) && (
-              <option value="">No options available</option>
+              <option value="" disabled>No options available</option>
             )}
             {field.options && field.options.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>

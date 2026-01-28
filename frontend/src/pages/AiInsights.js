@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAiInsights, getAiInsight, createAiInsight, getCompanies } from '../services/api';
+import { getAiInsights, getAiInsight, createAiInsight, deleteAiInsight, getCompanies } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -81,6 +81,11 @@ function AiInsights() {
     fetchData();
   };
 
+  const handleDelete = async (id) => {
+    await deleteAiInsight(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'insight_type', label: 'Insight Type', type: 'select', options: [
@@ -128,6 +133,7 @@ function AiInsights() {
         title="AI Insight Details"
         data={selectedItem || {}}
         fields={detailFields}
+        onDelete={handleDelete}
       />
 
       <FormModal

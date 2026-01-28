@@ -31,6 +31,17 @@ const complianceReportsRoutes = require('./routes/complianceReports');
 const taxReportsRoutes = require('./routes/taxReports');
 const aiRoutes = require('./routes/ai');
 const dashboardRoutes = require('./routes/dashboard');
+const financialRatiosRoutes = require('./routes/financialRatios');
+const exportRoutes = require('./routes/export');
+const scheduledReportsRoutes = require('./routes/scheduledReports');
+const naturalLanguageQueryRoutes = require('./routes/naturalLanguageQuery');
+const peerComparisonRoutes = require('./routes/peerComparison');
+const scenarioAnalysisRoutes = require('./routes/scenarioAnalysis');
+const dcfValuationRoutes = require('./routes/dcfValuation');
+const monteCarloRoutes = require('./routes/monteCarloSimulation');
+const capitalBudgetingRoutes = require('./routes/capitalBudgeting');
+const breakEvenRoutes = require('./routes/breakEvenAnalysis');
+const workingCapitalRoutes = require('./routes/workingCapitalOptimizer');
 
 // API Routes
 app.use('/api/companies', companiesRoutes);
@@ -51,6 +62,17 @@ app.use('/api/compliance-reports', complianceReportsRoutes);
 app.use('/api/tax-reports', taxReportsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/financial-ratios', financialRatiosRoutes);
+app.use('/api/export', exportRoutes);
+app.use('/api/scheduled-reports', scheduledReportsRoutes);
+app.use('/api/natural-language', naturalLanguageQueryRoutes);
+app.use('/api/peer-comparison', peerComparisonRoutes);
+app.use('/api/scenario-analysis', scenarioAnalysisRoutes);
+app.use('/api/dcf-valuation', dcfValuationRoutes);
+app.use('/api/monte-carlo', monteCarloRoutes);
+app.use('/api/capital-budgeting', capitalBudgetingRoutes);
+app.use('/api/break-even', breakEvenRoutes);
+app.use('/api/working-capital', workingCapitalRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

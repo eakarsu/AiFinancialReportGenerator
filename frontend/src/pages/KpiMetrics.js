@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getKpiMetrics, getKpiMetric, createKpiMetric, getCompanies, analyzeKpi } from '../services/api';
+import { getKpiMetrics, getKpiMetric, createKpiMetric, getCompanies, analyzeKpi, deleteKpiMetric } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -93,6 +93,11 @@ function KpiMetrics() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteKpiMetric(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'metric_name', label: 'Metric Name', type: 'select', options: [
@@ -162,6 +167,7 @@ function KpiMetrics() {
         aiField="ai_recommendation"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

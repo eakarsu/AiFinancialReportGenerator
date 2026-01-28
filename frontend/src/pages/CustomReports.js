@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getCustomReports, getCustomReport, createCustomReport, getCompanies, analyzeCustomReport } from '../services/api';
+import { getCustomReports, getCustomReport, createCustomReport, deleteCustomReport, getCompanies, analyzeCustomReport } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -92,6 +92,11 @@ function CustomReports() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteCustomReport(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'report_name', label: 'Report Name', type: 'text', defaultValue: 'Monthly Financial Summary', placeholder: 'Monthly Financial Summary' },
@@ -138,6 +143,7 @@ function CustomReports() {
         aiField="ai_content"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

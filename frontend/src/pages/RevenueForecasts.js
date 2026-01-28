@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getRevenueForecasts, getRevenueForecast, createRevenueForecast, getCompanies, analyzeRevenueForecast } from '../services/api';
+import { getRevenueForecasts, getRevenueForecast, createRevenueForecast, getCompanies, analyzeRevenueForecast, deleteRevenueForecast } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -92,6 +92,11 @@ function RevenueForecasts() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteRevenueForecast(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'forecast_name', label: 'Forecast Name', type: 'text', defaultValue: 'Q1 2025 Revenue Forecast', placeholder: 'Q1 2025 Revenue Forecast' },
@@ -143,6 +148,7 @@ function RevenueForecasts() {
         aiField="ai_analysis"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFinancialStatements, getFinancialStatement, createFinancialStatement, analyzeStatement, getCompanies } from '../services/api';
+import { getFinancialStatements, getFinancialStatement, createFinancialStatement, analyzeStatement, getCompanies, deleteFinancialStatement } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -93,6 +93,11 @@ function FinancialStatements() {
     fetchData();
   };
 
+  const handleDelete = async (id) => {
+    await deleteFinancialStatement(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'statement_type', label: 'Statement Type', type: 'select', options: [
@@ -136,6 +141,7 @@ function FinancialStatements() {
         aiField="ai_summary"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

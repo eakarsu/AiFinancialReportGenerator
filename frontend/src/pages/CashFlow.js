@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getCashFlowRecords, getCashFlowRecord, createCashFlowRecord, getCompanies, analyzeCashFlow } from '../services/api';
+import { getCashFlowRecords, getCashFlowRecord, createCashFlowRecord, getCompanies, analyzeCashFlow, deleteCashFlowRecord } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -89,6 +89,11 @@ function CashFlow() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteCashFlowRecord(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'record_type', label: 'Record Type', type: 'select', options: [
@@ -135,6 +140,7 @@ function CashFlow() {
         aiField="ai_classification"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getBalanceSheets, getBalanceSheet, createBalanceSheet, getCompanies, analyzeBalanceSheet } from '../services/api';
+import { getBalanceSheets, getBalanceSheet, createBalanceSheet, getCompanies, analyzeBalanceSheet, deleteBalanceSheet } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -94,6 +94,11 @@ function BalanceSheets() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteBalanceSheet(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'as_of_date', label: 'As Of Date', type: 'date' },
@@ -131,6 +136,7 @@ function BalanceSheets() {
         aiField="ai_analysis"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

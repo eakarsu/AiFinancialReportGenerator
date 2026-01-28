@@ -152,4 +152,94 @@ export const generateReport = (data) => api.post('/ai/generate-report', data);
 export const generateFinalReport = (data) => api.post('/ai/generate-final-report', data);
 export const chatWithAi = (message, context, companyId) => api.post('/ai/chat', { message, context, company_id: companyId });
 
+// Financial Ratios
+export const getFinancialRatios = (companyId) => api.get(`/financial-ratios/calculate/${companyId}`);
+export const getRatioBenchmarks = (industry) => api.get(`/financial-ratios/benchmarks/${industry}`);
+export const analyzeFinancialRatios = (companyId, ratios) => api.post('/financial-ratios/analyze', { companyId, ratios });
+
+// Export
+export const exportFinancialStatements = (companyId, format) => api.get(`/export/financial-statements/${companyId}`, { params: { format }, responseType: 'blob' });
+export const exportBalanceSheets = (companyId, format) => api.get(`/export/balance-sheets/${companyId}`, { params: { format }, responseType: 'blob' });
+export const exportProfitLoss = (companyId, format) => api.get(`/export/profit-loss/${companyId}`, { params: { format }, responseType: 'blob' });
+export const exportComprehensiveReport = (companyId) => api.get(`/export/comprehensive-report/${companyId}`, { responseType: 'blob' });
+export const exportAllData = (companyId) => api.get(`/export/all-data/${companyId}`, { responseType: 'blob' });
+
+// Scheduled Reports
+export const getScheduledReports = (params) => api.get('/scheduled-reports', { params });
+export const getScheduledReport = (id) => api.get(`/scheduled-reports/${id}`);
+export const createScheduledReport = (data) => api.post('/scheduled-reports', data);
+export const updateScheduledReport = (id, data) => api.put(`/scheduled-reports/${id}`, data);
+export const deleteScheduledReport = (id) => api.delete(`/scheduled-reports/${id}`);
+export const runScheduledReport = (id) => api.post(`/scheduled-reports/${id}/run`);
+export const getReportExecutionHistory = (id) => api.get(`/scheduled-reports/${id}/history`);
+
+// Natural Language Query
+export const executeNaturalLanguageQuery = (data) => api.post('/natural-language/query', data);
+export const getQuerySuggestions = () => api.get('/natural-language/suggestions');
+export const saveQuery = (data) => api.post('/natural-language/save', data);
+export const getSavedQueries = (params) => api.get('/natural-language/saved', { params });
+export const deleteSavedQuery = (id) => api.delete(`/natural-language/saved/${id}`);
+
+// Peer Comparison
+export const getPeerComparison = (companyIds) => api.get('/peer-comparison/compare', { params: { company_ids: companyIds } });
+export const analyzePeerComparison = (companyIds) => api.post('/peer-comparison/analyze', { company_ids: companyIds });
+export const getIndustryBenchmarks = (industry) => api.get('/peer-comparison/benchmarks', { params: { industry } });
+export const getPeerCompanies = (params) => api.get('/peer-comparison/companies', { params });
+
+// Scenario Analysis (What-If)
+export const getScenarios = (params) => api.get('/scenario-analysis', { params });
+export const getScenarioAnalyses = (params) => api.get('/scenario-analysis', { params });
+export const getScenario = (id) => api.get(`/scenario-analysis/${id}`);
+export const runScenarioAnalysis = (data) => api.post('/scenario-analysis/analyze', data);
+export const compareScenarios = (data) => api.post('/scenario-analysis/compare', data);
+export const analyzeScenario = (data) => api.post('/scenario-analysis/ai-analyze', data);
+export const createScenario = (data) => api.post('/scenario-analysis', data);
+export const deleteScenario = (id) => api.delete(`/scenario-analysis/${id}`);
+
+// DCF Valuation
+export const getDCFValuations = (params) => api.get('/dcf-valuation', { params });
+export const getDCFValuation = (id) => api.get(`/dcf-valuation/${id}`);
+export const calculateDCF = (data) => api.post('/dcf-valuation/calculate', data);
+export const analyzeDCF = (data) => api.post('/dcf-valuation/analyze', data);
+export const createDCFValuation = (data) => api.post('/dcf-valuation', data);
+export const deleteDCFValuation = (id) => api.delete(`/dcf-valuation/${id}`);
+
+// Monte Carlo Simulation
+export const getMonteCarloSimulations = (params) => api.get('/monte-carlo', { params });
+export const getMonteCarloSimulation = (id) => api.get(`/monte-carlo/${id}`);
+export const runMonteCarloSimulation = (data) => api.post('/monte-carlo/run', data);
+export const analyzeMonteCarloSimulation = (data) => api.post('/monte-carlo/analyze', data);
+export const createMonteCarloSimulation = (data) => api.post('/monte-carlo', data);
+export const deleteMonteCarloSimulation = (id) => api.delete(`/monte-carlo/${id}`);
+
+// Capital Budgeting
+export const getCapitalProjects = (params) => api.get('/capital-budgeting', { params });
+export const getCapitalProject = (id) => api.get(`/capital-budgeting/${id}`);
+export const calculateCapitalProject = (data) => api.post('/capital-budgeting/calculate', data);
+export const compareCapitalProjects = (data) => api.post('/capital-budgeting/compare', data);
+export const runSensitivityAnalysis = (data) => api.post('/capital-budgeting/sensitivity', data);
+export const analyzeCapitalProject = (data) => api.post('/capital-budgeting/analyze', data);
+export const createCapitalProject = (data) => api.post('/capital-budgeting', data);
+export const deleteCapitalProject = (id) => api.delete(`/capital-budgeting/${id}`);
+
+// Break-Even Analysis
+export const getBreakEvenAnalyses = (params) => api.get('/break-even', { params });
+export const getBreakEvenAnalysis = (id) => api.get(`/break-even/${id}`);
+export const calculateBreakEven = (data) => api.post('/break-even/calculate', data);
+export const breakEvenWhatIf = (data) => api.post('/break-even/what-if', data);
+export const calculateTargetProfit = (data) => api.post('/break-even/target-profit', data);
+export const analyzeBreakEven = (data) => api.post('/break-even/analyze', data);
+export const createBreakEvenAnalysis = (data) => api.post('/break-even', data);
+export const deleteBreakEvenAnalysis = (id) => api.delete(`/break-even/${id}`);
+
+// Working Capital Optimizer
+export const getWorkingCapitalAnalyses = (params) => api.get('/working-capital', { params });
+export const getWorkingCapitalAnalysis = (id) => api.get(`/working-capital/${id}`);
+export const analyzeWorkingCapital = (data) => api.post('/working-capital/analyze', data);
+export const forecastCashFlow = (data) => api.post('/working-capital/forecast-cash', data);
+export const getWorkingCapitalBenchmarks = (industry) => api.get(`/working-capital/benchmarks/${industry}`);
+export const getWorkingCapitalRecommendations = (data) => api.post('/working-capital/ai-recommendations', data);
+export const createWorkingCapitalAnalysis = (data) => api.post('/working-capital', data);
+export const deleteWorkingCapitalAnalysis = (id) => api.delete(`/working-capital/${id}`);
+
 export default api;

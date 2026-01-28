@@ -160,8 +160,8 @@ start_application() {
     echo -e "${YELLOW}Press Ctrl+C to stop the application${NC}"
     echo ""
 
-    # Start backend and frontend concurrently
-    npm start
+    # Start backend and frontend concurrently (dev mode with auto-reload)
+    npm run dev
 }
 
 # Main execution

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getComplianceReports, getComplianceReport, createComplianceReport, getCompanies, analyzeComplianceReport } from '../services/api';
+import { getComplianceReports, getComplianceReport, createComplianceReport, getCompanies, analyzeComplianceReport, deleteComplianceReport } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -91,6 +91,11 @@ function ComplianceReports() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteComplianceReport(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'regulation_type', label: 'Regulation Type', type: 'select', options: [
@@ -144,6 +149,7 @@ function ComplianceReports() {
         aiField="ai_compliance_check"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

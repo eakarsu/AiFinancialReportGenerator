@@ -21,6 +21,17 @@ import TaxReports from './pages/TaxReports';
 import AiChat from './pages/AiChat';
 import UserProfile from './pages/UserProfile';
 import GenerateReport from './pages/GenerateReport';
+import FinancialRatios from './pages/FinancialRatios';
+import NaturalLanguageQuery from './pages/NaturalLanguageQuery';
+import PeerComparison from './pages/PeerComparison';
+import ExportData from './pages/ExportData';
+import ScheduledReports from './pages/ScheduledReports';
+import ScenarioAnalysis from './pages/ScenarioAnalysis';
+import DCFValuation from './pages/DCFValuation';
+import MonteCarloSimulation from './pages/MonteCarloSimulation';
+import CapitalBudgeting from './pages/CapitalBudgeting';
+import BreakEvenAnalysis from './pages/BreakEvenAnalysis';
+import WorkingCapitalOptimizer from './pages/WorkingCapitalOptimizer';
 import './App.css';
 
 function App() {
@@ -94,6 +105,17 @@ function App() {
           <Route path="/ai-chat" element={<AiChat />} />
           <Route path="/generate-report" element={<GenerateReport />} />
           <Route path="/profile" element={<UserProfile user={user} />} />
+          <Route path="/financial-ratios" element={<FinancialRatios />} />
+          <Route path="/natural-language-query" element={<NaturalLanguageQuery />} />
+          <Route path="/peer-comparison" element={<PeerComparison />} />
+          <Route path="/export-data" element={<ExportData />} />
+          <Route path="/scheduled-reports" element={<ScheduledReports />} />
+          <Route path="/scenario-analysis" element={<ScenarioAnalysis />} />
+          <Route path="/dcf-valuation" element={<DCFValuation />} />
+          <Route path="/monte-carlo" element={<MonteCarloSimulation />} />
+          <Route path="/capital-budgeting" element={<CapitalBudgeting />} />
+          <Route path="/break-even" element={<BreakEvenAnalysis />} />
+          <Route path="/working-capital" element={<WorkingCapitalOptimizer />} />
           <Route path="/login" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

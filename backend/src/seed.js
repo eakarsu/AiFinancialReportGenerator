@@ -472,6 +472,100 @@ async function seed() {
     }
     console.log('Tax reports seeded: 15');
 
+    // Seed Scheduled Reports (15 items)
+    const scheduleFrequencies = ['daily', 'weekly', 'monthly', 'quarterly'];
+    const reportFormats = ['pdf', 'excel', 'html'];
+    const scheduledReportIds = [];
+
+    for (let i = 0; i < 15; i++) {
+      const frequency = scheduleFrequencies[i % scheduleFrequencies.length];
+      const nextRun = new Date();
+      if (frequency === 'daily') nextRun.setDate(nextRun.getDate() + 1);
+      else if (frequency === 'weekly') nextRun.setDate(nextRun.getDate() + 7);
+      else if (frequency === 'monthly') nextRun.setMonth(nextRun.getMonth() + 1);
+      else nextRun.setMonth(nextRun.getMonth() + 3);
+
+      const result = await pool.query(
+        `INSERT INTO scheduled_reports (company_id, report_name, report_type, schedule_frequency, schedule_day, schedule_time, recipients, include_sections, format, is_active, next_run)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+        [
+          companyIds[i % companyIds.length],
+          `${frequency.charAt(0).toUpperCase() + frequency.slice(1)} Financial Report ${i + 1}`,
+          i % 3 === 0 ? 'financial_summary' : i % 3 === 1 ? 'executive_report' : 'detailed_analysis',
+          frequency,
+          frequency === 'weekly' ? (i % 7) : frequency === 'monthly' ? ((i % 28) + 1) : null,
+          `${8 + (i % 4)}:00`,
+          [`cfo${i}@company.com`, `finance${i}@company.com`],
+          ['summary', 'balance_sheet', 'profit_loss', 'kpis'],
+          reportFormats[i % reportFormats.length],
+          i % 4 !== 0,
+          nextRun.toISOString()
+        ]
+      );
+      scheduledReportIds.push(result.rows[0].id);
+    }
+    console.log('Scheduled reports seeded: 15');
+
+    // Seed Report Execution Logs (20 items)
+    const executionStatuses = ['completed', 'completed', 'completed', 'failed', 'running'];
+
+    for (let i = 0; i < 20; i++) {
+      const startedAt = new Date();
+      startedAt.setDate(startedAt.getDate() - (i + 1));
+      const completedAt = new Date(startedAt);
+      completedAt.setMinutes(completedAt.getMinutes() + 2 + Math.floor(Math.random() * 5));
+      const status = executionStatuses[i % executionStatuses.length];
+
+      await pool.query(
+        `INSERT INTO report_execution_logs (scheduled_report_id, company_id, status, started_at, completed_at, error_message, recipients_notified)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          scheduledReportIds[i % scheduledReportIds.length],
+          companyIds[i % companyIds.length],
+          status,
+          startedAt.toISOString(),
+          status !== 'running' ? completedAt.toISOString() : null,
+          status === 'failed' ? 'Failed to connect to email server' : null,
+          status === 'completed' ? 2 + Math.floor(Math.random() * 3) : 0
+        ]
+      );
+    }
+    console.log('Report execution logs seeded: 20');
+
+    // Seed Saved Queries (15 items)
+    const savedQueryTexts = [
+      'Show total revenue by quarter',
+      'What are the top 5 expense categories?',
+      'Compare profit vs revenue over time',
+      'Show current assets vs liabilities',
+      'Display KPIs with negative trends',
+      'Which period had highest net income?',
+      'Show expense breakdown by department',
+      'What is our gross profit margin trend?',
+      'List all high severity anomalies',
+      'Compare budget vs actual by category',
+      'Show cash flow summary',
+      'What is our debt to equity ratio?',
+      'Display compliance status overview',
+      'Show revenue forecast accuracy',
+      'List pending tax filings'
+    ];
+    const visualizationTypes = ['table', 'chart', 'metric', 'comparison'];
+
+    for (let i = 0; i < 15; i++) {
+      await pool.query(
+        `INSERT INTO saved_queries (company_id, query_name, query_text, visualization_type)
+         VALUES ($1, $2, $3, $4)`,
+        [
+          companyIds[i % companyIds.length],
+          `Saved Query ${i + 1}`,
+          savedQueryTexts[i],
+          visualizationTypes[i % visualizationTypes.length]
+        ]
+      );
+    }
+    console.log('Saved queries seeded: 15');
+
     console.log('\nDatabase seeding completed successfully!');
     console.log('Summary:');
     console.log('- Companies: 15');
@@ -491,6 +585,9 @@ async function seed() {
     console.log('- Trend Analyses: 15');
     console.log('- Compliance Reports: 15');
     console.log('- Tax Reports: 15');
+    console.log('- Scheduled Reports: 15');
+    console.log('- Report Execution Logs: 20');
+    console.log('- Saved Queries: 15');
 
   } catch (error) {
     console.error('Error seeding database:', error);

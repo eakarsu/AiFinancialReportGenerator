@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProfitLossRecords, getProfitLossRecord, createProfitLossRecord, getCompanies, analyzeProfitLoss } from '../services/api';
+import { getProfitLossRecords, getProfitLossRecord, createProfitLossRecord, deleteProfitLossRecord, getCompanies, analyzeProfitLoss } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -92,6 +92,11 @@ function ProfitLoss() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteProfitLossRecord(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'period', label: 'Period', type: 'select', options: [
@@ -131,6 +136,7 @@ function ProfitLoss() {
         aiField="ai_insights"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

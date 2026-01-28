@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAnomalyDetections, getAnomalyDetection, createAnomalyDetection, getCompanies, analyzeAnomaly } from '../services/api';
+import { getAnomalyDetections, getAnomalyDetection, createAnomalyDetection, deleteAnomalyDetection, getCompanies, analyzeAnomaly } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -98,6 +98,11 @@ function AnomalyDetections() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteAnomalyDetection(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'anomaly_type', label: 'Anomaly Type', type: 'select', options: [
@@ -149,6 +154,7 @@ function AnomalyDetections() {
         aiField="ai_explanation"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal

@@ -58,10 +58,13 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { company_id, report_name, report_type, description, query_config, chart_config, filters, schedule, recipients, ai_generated, created_by } = req.body;
+    // Convert empty strings to null for UUID columns
+    const companyIdValue = company_id && company_id.trim() !== '' ? company_id : null;
+    const createdByValue = created_by && created_by.trim() !== '' ? created_by : null;
     const result = await pool.query(
       `INSERT INTO custom_reports (company_id, report_name, report_type, description, query_config, chart_config, filters, schedule, recipients, ai_generated, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-      [company_id, report_name, report_type, description, JSON.stringify(query_config), JSON.stringify(chart_config), JSON.stringify(filters), schedule, recipients, ai_generated || false, created_by]
+      [companyIdValue, report_name, report_type, description, JSON.stringify(query_config), JSON.stringify(chart_config), JSON.stringify(filters), schedule, recipients, ai_generated || false, createdByValue]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {

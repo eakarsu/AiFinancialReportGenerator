@@ -89,7 +89,7 @@ CREATE TABLE expense_records (
     receipt_url VARCHAR(500),
     approved_by UUID REFERENCES users(id),
     status VARCHAR(20) DEFAULT 'pending',
-    ai_categorization VARCHAR(100),
+    ai_categorization TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -210,6 +210,7 @@ CREATE TABLE custom_reports (
     recipients TEXT[],
     last_generated TIMESTAMP,
     ai_generated BOOLEAN DEFAULT false,
+    ai_content TEXT,
     created_by UUID REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -305,6 +306,166 @@ CREATE TABLE tax_reports (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Scheduled Reports
+CREATE TABLE scheduled_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    report_name VARCHAR(255) NOT NULL,
+    report_type VARCHAR(100) NOT NULL,
+    schedule_frequency VARCHAR(50) NOT NULL,
+    schedule_day INTEGER,
+    schedule_time VARCHAR(10) DEFAULT '09:00',
+    recipients TEXT[],
+    include_sections TEXT[],
+    format VARCHAR(20) DEFAULT 'pdf',
+    is_active BOOLEAN DEFAULT true,
+    last_run TIMESTAMP,
+    next_run TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Report Execution Logs
+CREATE TABLE report_execution_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    scheduled_report_id UUID REFERENCES scheduled_reports(id),
+    company_id UUID REFERENCES companies(id),
+    status VARCHAR(20) NOT NULL,
+    started_at TIMESTAMP NOT NULL,
+    completed_at TIMESTAMP,
+    error_message TEXT,
+    file_url VARCHAR(500),
+    recipients_notified INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Saved Queries (for Natural Language Query feature)
+CREATE TABLE saved_queries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    query_name VARCHAR(255) NOT NULL,
+    query_text TEXT NOT NULL,
+    visualization_type VARCHAR(50) DEFAULT 'table',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Scenario Analyses (What-If Analysis)
+CREATE TABLE scenario_analyses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    scenario_name VARCHAR(255) NOT NULL,
+    scenario_type VARCHAR(100),
+    base_values JSONB,
+    assumptions JSONB,
+    variables JSONB,
+    projected_values JSONB,
+    impact_summary JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- DCF Valuations
+CREATE TABLE dcf_valuations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    valuation_name VARCHAR(255) NOT NULL,
+    initial_fcf DECIMAL(15,2),
+    projection_years INTEGER DEFAULT 5,
+    growth_rates JSONB,
+    wacc DECIMAL(8,4),
+    terminal_growth_rate DECIMAL(8,4),
+    projected_cash_flows JSONB,
+    terminal_value DECIMAL(18,2),
+    enterprise_value DECIMAL(18,2),
+    equity_value DECIMAL(18,2),
+    sensitivity_matrix JSONB,
+    assumptions JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Monte Carlo Simulations
+CREATE TABLE monte_carlo_simulations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    simulation_name VARCHAR(255) NOT NULL,
+    simulation_type VARCHAR(100),
+    num_simulations INTEGER DEFAULT 10000,
+    variables JSONB,
+    projection_years INTEGER DEFAULT 5,
+    statistics JSONB,
+    percentiles JSONB,
+    probabilities JSONB,
+    var_95 DECIMAL(15,2),
+    var_99 DECIMAL(15,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Capital Projects (Capital Budgeting)
+CREATE TABLE capital_projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    project_name VARCHAR(255) NOT NULL,
+    initial_investment DECIMAL(15,2) NOT NULL,
+    cash_flows JSONB,
+    discount_rate DECIMAL(8,4),
+    project_life INTEGER,
+    salvage_value DECIMAL(15,2) DEFAULT 0,
+    npv DECIMAL(15,2),
+    irr DECIMAL(8,4),
+    mirr DECIMAL(8,4),
+    payback_period DECIMAL(8,2),
+    discounted_payback DECIMAL(8,2),
+    profitability_index DECIMAL(8,4),
+    eaa DECIMAL(15,2),
+    decision JSONB,
+    status VARCHAR(50) DEFAULT 'draft',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Break-Even Analyses
+CREATE TABLE break_even_analyses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    analysis_name VARCHAR(255) NOT NULL,
+    fixed_costs DECIMAL(15,2) NOT NULL,
+    variable_cost_per_unit DECIMAL(15,4) NOT NULL,
+    selling_price_per_unit DECIMAL(15,4) NOT NULL,
+    break_even_units DECIMAL(15,2),
+    break_even_revenue DECIMAL(15,2),
+    contribution_margin DECIMAL(15,4),
+    contribution_margin_ratio DECIMAL(8,4),
+    margin_of_safety DECIMAL(8,4),
+    operating_leverage DECIMAL(8,4),
+    sensitivity_data JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Working Capital Analyses
+CREATE TABLE working_capital_analyses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    analysis_name VARCHAR(255) NOT NULL,
+    accounts_receivable DECIMAL(15,2),
+    inventory DECIMAL(15,2),
+    accounts_payable DECIMAL(15,2),
+    revenue DECIMAL(15,2),
+    cogs DECIMAL(15,2),
+    dso DECIMAL(8,2),
+    dio DECIMAL(8,2),
+    dpo DECIMAL(8,2),
+    cash_conversion_cycle DECIMAL(8,2),
+    working_capital DECIMAL(15,2),
+    optimization_potential DECIMAL(15,2),
+    recommendations JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_financial_statements_company ON financial_statements(company_id);
 CREATE INDEX idx_revenue_forecasts_company ON revenue_forecasts(company_id);
@@ -323,3 +484,13 @@ CREATE INDEX idx_anomaly_detections_company ON anomaly_detections(company_id);
 CREATE INDEX idx_trend_analyses_company ON trend_analyses(company_id);
 CREATE INDEX idx_compliance_reports_company ON compliance_reports(company_id);
 CREATE INDEX idx_tax_reports_company ON tax_reports(company_id);
+CREATE INDEX idx_scheduled_reports_company ON scheduled_reports(company_id);
+CREATE INDEX idx_scheduled_reports_next_run ON scheduled_reports(next_run);
+CREATE INDEX idx_report_execution_logs_report ON report_execution_logs(scheduled_report_id);
+CREATE INDEX idx_saved_queries_company ON saved_queries(company_id);
+CREATE INDEX idx_scenario_analyses_company ON scenario_analyses(company_id);
+CREATE INDEX idx_dcf_valuations_company ON dcf_valuations(company_id);
+CREATE INDEX idx_monte_carlo_simulations_company ON monte_carlo_simulations(company_id);
+CREATE INDEX idx_capital_projects_company ON capital_projects(company_id);
+CREATE INDEX idx_break_even_analyses_company ON break_even_analyses(company_id);
+CREATE INDEX idx_working_capital_analyses_company ON working_capital_analyses(company_id);

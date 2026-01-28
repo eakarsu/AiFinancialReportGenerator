@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTrendAnalyses, getTrendAnalysis, createTrendAnalysis, getCompanies, analyzeTrendRecord } from '../services/api';
+import { getTrendAnalyses, getTrendAnalysis, createTrendAnalysis, getCompanies, analyzeTrendRecord, deleteTrendAnalysis } from '../services/api';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -95,6 +95,11 @@ function TrendAnalyses() {
     }
   };
 
+  const handleDelete = async (id) => {
+    await deleteTrendAnalysis(id);
+    fetchData();
+  };
+
   const formFields = [
     { key: 'company_id', label: 'Company', type: 'select', options: companies.map(c => ({ value: c.id, label: c.name })) },
     { key: 'metric_name', label: 'Metric Name', type: 'select', options: [
@@ -153,6 +158,7 @@ function TrendAnalyses() {
         aiField="ai_narrative"
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
+        onDelete={handleDelete}
       />
 
       <FormModal
