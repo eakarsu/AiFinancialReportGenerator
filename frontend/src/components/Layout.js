@@ -1,37 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  FileText,
-  TrendingUp,
-  DollarSign,
-  ArrowRightLeft,
-  PieChart,
-  BarChart3,
-  Scale,
-  Target,
-  History,
-  FileSpreadsheet,
-  Lightbulb,
-  AlertTriangle,
-  LineChart,
-  Shield,
-  Receipt,
-  MessageSquare,
-  Settings,
-  Bell,
-  User,
-  Brain,
-  LogOut,
-  Calculator,
-  Download,
-  Calendar,
-  Users,
-  Search,
-  GitBranch,
-  Dice6,
-  Building2,
-  Wallet
+  LayoutDashboard, FileText, TrendingUp, DollarSign, ArrowRightLeft, PieChart,
+  BarChart3, Scale, Target, History, FileSpreadsheet, Lightbulb, AlertTriangle,
+  LineChart, Shield, Receipt, MessageSquare, Settings, Bell, User, Brain, LogOut,
+  Calculator, Download, Calendar, Users, Search, GitBranch, Dice6, Building2,
+  Wallet, Presentation, ClipboardList, Menu, X, UserPlus
 } from 'lucide-react';
 
 const navItems = [
@@ -80,53 +54,99 @@ const navItems = [
     { path: '/break-even', icon: Target, label: 'Break-Even' },
     { path: '/working-capital', icon: Wallet, label: 'Working Capital' },
   ]},
+  { section: 'AI Assistants', items: [
+    { path: '/ai-presentations', icon: Presentation, label: 'AI Presentations' },
+    { path: '/ai-variance-explainer', icon: PieChart, label: 'Variance Explainer' },
+    { path: '/ai-forecast-generator', icon: TrendingUp, label: 'Forecast Generator' },
+    { path: '/ai-audit-analyzer', icon: Shield, label: 'Audit Analyzer' },
+    { path: '/ai-board-reports', icon: ClipboardList, label: 'Board Reports' },
+    { path: '/ai-expense-categorizer', icon: DollarSign, label: 'Expense Categorizer' },
+    { path: '/ai-responses', icon: Brain, label: 'AI History' },
+  ]},
 ];
 
 const pageNames = {
-  '/': 'Dashboard',
-  '/ai-chat': 'AI Assistant',
-  '/financial-statements': 'Financial Statements',
-  '/revenue-forecasts': 'Revenue Forecasts',
-  '/expense-records': 'Expense Records',
-  '/cash-flow': 'Cash Flow',
-  '/budget-actuals': 'Budget vs Actuals',
-  '/profit-loss': 'Profit & Loss',
-  '/balance-sheets': 'Balance Sheets',
-  '/kpi-metrics': 'KPI Metrics',
-  '/audit-logs': 'Audit Logs',
-  '/custom-reports': 'Custom Reports',
-  '/ai-insights': 'AI Insights',
-  '/anomaly-detections': 'Anomaly Detection',
-  '/trend-analyses': 'Trend Analysis',
-  '/compliance-reports': 'Compliance Reports',
-  '/tax-reports': 'Tax Reports',
-  '/generate-report': 'Generate Final Report',
-  '/profile': 'User Profile',
-  '/financial-ratios': 'Financial Ratios',
-  '/natural-language-query': 'Natural Language Query',
-  '/peer-comparison': 'Peer Comparison',
-  '/export-data': 'Export Data',
-  '/scheduled-reports': 'Scheduled Reports',
-  '/scenario-analysis': 'Scenario Analysis',
-  '/dcf-valuation': 'DCF Valuation',
-  '/monte-carlo': 'Monte Carlo Simulation',
-  '/capital-budgeting': 'Capital Budgeting',
-  '/break-even': 'Break-Even Analysis',
-  '/working-capital': 'Working Capital Optimizer',
+  '/': 'Dashboard', '/ai-chat': 'AI Assistant',
+  '/financial-statements': 'Financial Statements', '/revenue-forecasts': 'Revenue Forecasts',
+  '/expense-records': 'Expense Records', '/cash-flow': 'Cash Flow',
+  '/budget-actuals': 'Budget vs Actuals', '/profit-loss': 'Profit & Loss',
+  '/balance-sheets': 'Balance Sheets', '/kpi-metrics': 'KPI Metrics',
+  '/audit-logs': 'Audit Logs', '/custom-reports': 'Custom Reports',
+  '/ai-insights': 'AI Insights', '/anomaly-detections': 'Anomaly Detection',
+  '/trend-analyses': 'Trend Analysis', '/compliance-reports': 'Compliance Reports',
+  '/tax-reports': 'Tax Reports', '/generate-report': 'Generate Final Report',
+  '/profile': 'User Profile', '/financial-ratios': 'Financial Ratios',
+  '/natural-language-query': 'Natural Language Query', '/peer-comparison': 'Peer Comparison',
+  '/export-data': 'Export Data', '/scheduled-reports': 'Scheduled Reports',
+  '/scenario-analysis': 'Scenario Analysis', '/dcf-valuation': 'DCF Valuation',
+  '/monte-carlo': 'Monte Carlo Simulation', '/capital-budgeting': 'Capital Budgeting',
+  '/break-even': 'Break-Even Analysis', '/working-capital': 'Working Capital Optimizer',
+  '/ai-presentations': 'AI Presentation Generator', '/ai-variance-explainer': 'AI Variance Explainer',
+  '/ai-forecast-generator': 'AI Forecast Generator', '/ai-audit-analyzer': 'AI Audit Trail Analyzer',
+  '/ai-board-reports': 'AI Board Report Writer', '/ai-responses': 'AI Response History',
+  '/ai-expense-categorizer': 'AI Expense Categorizer', '/register': 'Register',
+  '/password-reset': 'Password Reset',
 };
+
+// RBAC role permissions
+const rolePermissions = {
+  admin: '*',
+  cfo: '*',
+  CFO: '*',
+  director: ['/', '/ai-chat', '/financial-statements', '/profit-loss', '/balance-sheets', '/cash-flow',
+    '/revenue-forecasts', '/trend-analyses', '/kpi-metrics', '/expense-records', '/budget-actuals',
+    '/ai-insights', '/compliance-reports', '/tax-reports', '/generate-report', '/custom-reports',
+    '/audit-logs', '/financial-ratios', '/export-data', '/scheduled-reports', '/ai-presentations',
+    '/ai-board-reports', '/ai-responses', '/profile'],
+  manager: ['/', '/ai-chat', '/financial-statements', '/profit-loss', '/balance-sheets', '/cash-flow',
+    '/revenue-forecasts', '/kpi-metrics', '/expense-records', '/budget-actuals', '/ai-insights',
+    '/generate-report', '/custom-reports', '/export-data', '/profile'],
+  analyst: ['/', '/ai-chat', '/financial-statements', '/profit-loss', '/balance-sheets',
+    '/revenue-forecasts', '/trend-analyses', '/kpi-metrics', '/expense-records', '/budget-actuals',
+    '/ai-insights', '/custom-reports', '/export-data', '/profile'],
+  viewer: ['/', '/ai-chat', '/financial-statements', '/profit-loss', '/balance-sheets', '/kpi-metrics', '/profile'],
+};
+
+function hasAccess(role, path) {
+  const perms = rolePermissions[role];
+  if (!perms) return true; // unknown role = full access
+  if (perms === '*') return true;
+  return perms.includes(path);
+}
 
 function Layout({ children, user, onLogout }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const currentPageName = pageNames[location.pathname] || 'Page';
 
-  const handleProfileClick = () => {
-    navigate('/profile');
-  };
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  // Close on resize to desktop
+  useEffect(() => {
+    const handleResize = () => { if (window.innerWidth > 768) setMobileOpen(false); };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleProfileClick = () => navigate('/profile');
+
+  const filteredNavItems = navItems.map(section => ({
+    ...section,
+    items: section.items.filter(item => hasAccess(user?.role, item.path)),
+  })).filter(section => section.items.length > 0);
 
   return (
     <div className="app-layout">
-      <aside className="sidebar">
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />
+      )}
+
+      <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <Brain size={36} />
@@ -135,20 +155,20 @@ function Layout({ children, user, onLogout }) {
               <span>Enterprise Reports</span>
             </div>
           </div>
+          <button className="sidebar-close-btn" onClick={() => setMobileOpen(false)}>
+            <X size={20} />
+          </button>
         </div>
         <div className="sidebar-content">
           <nav className="sidebar-nav">
-            {navItems.map((section) => (
+            {filteredNavItems.map((section) => (
               <div key={section.section} className="nav-section">
                 <div className="nav-section-title">{section.section}</div>
                 {section.items.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                  >
+                  <NavLink key={item.path} to={item.path}
+                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                     <item.icon size={20} />
-                    {item.label}
+                    <span className="nav-label">{item.label}</span>
                   </NavLink>
                 ))}
               </div>
@@ -158,9 +178,7 @@ function Layout({ children, user, onLogout }) {
         {user && (
           <div className="sidebar-footer">
             <div className="user-info" onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
-              <div className="user-avatar">
-                <User size={20} />
-              </div>
+              <div className="user-avatar"><User size={20} /></div>
               <div className="user-details">
                 <span className="user-name">{user.name}</span>
                 <span className="user-role">{user.role}</span>
@@ -172,21 +190,22 @@ function Layout({ children, user, onLogout }) {
           </div>
         )}
       </aside>
+
       <main className="main-content">
         <header className="header">
           <div className="header-left">
+            <button className="hamburger-btn" onClick={() => setMobileOpen(true)}>
+              <Menu size={24} />
+            </button>
             <h2 className="header-title">{currentPageName}</h2>
           </div>
           <div className="header-right">
-            <button className="btn-icon">
-              <Bell size={20} />
-            </button>
-            <button className="btn-icon">
-              <Settings size={20} />
-            </button>
-            <div className="header-user">
+            <button className="btn-icon"><Bell size={20} /></button>
+            <button className="btn-icon"><Settings size={20} /></button>
+            <div className="header-user" onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
               <User size={20} />
-              <span>{user?.name || 'User'}</span>
+              <span className="header-user-name">{user?.name || 'User'}</span>
+              <span className="header-user-role">{user?.role || ''}</span>
             </div>
           </div>
         </header>

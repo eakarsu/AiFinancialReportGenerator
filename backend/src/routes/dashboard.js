@@ -2,6 +2,17 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 
+// Helper function to safely get count from a table
+async function safeCount(tableName, whereClause = '', params = []) {
+  try {
+    const result = await pool.query(`SELECT COUNT(*) FROM ${tableName} ${whereClause}`, params);
+    return parseInt(result.rows[0].count);
+  } catch (error) {
+    // Table might not exist, return 0
+    return 0;
+  }
+}
+
 // Get dashboard summary
 router.get('/summary', async (req, res) => {
   try {
@@ -9,7 +20,7 @@ router.get('/summary', async (req, res) => {
     const params = company_id ? [company_id] : [];
     const whereClause = company_id ? 'WHERE company_id = $1' : '';
 
-    // Get counts for all features
+    // Get counts for all features - each query handled independently
     const [
       companies,
       financialStatements,
@@ -26,43 +37,61 @@ router.get('/summary', async (req, res) => {
       complianceReports,
       taxReports,
       trendAnalyses,
-      auditLogs
+      auditLogs,
+      aiPresentations,
+      aiVarianceExplanations,
+      aiForecasts,
+      aiAuditAnalyses,
+      aiBoardReports,
+      aiExpenseCategorizations
     ] = await Promise.all([
-      pool.query('SELECT COUNT(*) FROM companies'),
-      pool.query(`SELECT COUNT(*) FROM financial_statements ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM revenue_forecasts ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM expense_records ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM cash_flow_records ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM budget_actuals ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM profit_loss_records ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM balance_sheets ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM kpi_metrics ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM ai_insights ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM anomaly_detections ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM custom_reports ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM compliance_reports ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM tax_reports ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM trend_analyses ${whereClause}`, params),
-      pool.query(`SELECT COUNT(*) FROM audit_logs ${whereClause}`, params)
+      safeCount('companies'),
+      safeCount('financial_statements', whereClause, params),
+      safeCount('revenue_forecasts', whereClause, params),
+      safeCount('expense_records', whereClause, params),
+      safeCount('cash_flow_records', whereClause, params),
+      safeCount('budget_actuals', whereClause, params),
+      safeCount('profit_loss_records', whereClause, params),
+      safeCount('balance_sheets', whereClause, params),
+      safeCount('kpi_metrics', whereClause, params),
+      safeCount('ai_insights', whereClause, params),
+      safeCount('anomaly_detections', whereClause, params),
+      safeCount('custom_reports', whereClause, params),
+      safeCount('compliance_reports', whereClause, params),
+      safeCount('tax_reports', whereClause, params),
+      safeCount('trend_analyses', whereClause, params),
+      safeCount('audit_logs', whereClause, params),
+      safeCount('ai_presentations', whereClause, params),
+      safeCount('ai_variance_explanations', whereClause, params),
+      safeCount('ai_forecasts', whereClause, params),
+      safeCount('ai_audit_analyses', whereClause, params),
+      safeCount('ai_board_reports', whereClause, params),
+      safeCount('ai_expense_categorizations', whereClause, params)
     ]);
 
     res.json({
-      companies: parseInt(companies.rows[0].count),
-      financialStatements: parseInt(financialStatements.rows[0].count),
-      revenueForecasts: parseInt(revenueForecasts.rows[0].count),
-      expenseRecords: parseInt(expenseRecords.rows[0].count),
-      cashFlowRecords: parseInt(cashFlowRecords.rows[0].count),
-      budgetActuals: parseInt(budgetActuals.rows[0].count),
-      profitLossRecords: parseInt(profitLossRecords.rows[0].count),
-      balanceSheets: parseInt(balanceSheets.rows[0].count),
-      kpiMetrics: parseInt(kpiMetrics.rows[0].count),
-      aiInsights: parseInt(aiInsights.rows[0].count),
-      anomalyDetections: parseInt(anomalyDetections.rows[0].count),
-      customReports: parseInt(customReports.rows[0].count),
-      complianceReports: parseInt(complianceReports.rows[0].count),
-      taxReports: parseInt(taxReports.rows[0].count),
-      trendAnalyses: parseInt(trendAnalyses.rows[0].count),
-      auditLogs: parseInt(auditLogs.rows[0].count)
+      companies,
+      financialStatements,
+      revenueForecasts,
+      expenseRecords,
+      cashFlowRecords,
+      budgetActuals,
+      profitLossRecords,
+      balanceSheets,
+      kpiMetrics,
+      aiInsights,
+      anomalyDetections,
+      customReports,
+      complianceReports,
+      taxReports,
+      trendAnalyses,
+      auditLogs,
+      aiPresentations,
+      aiVarianceExplainer: aiVarianceExplanations,
+      aiForecastGenerator: aiForecasts,
+      aiAuditAnalyzer: aiAuditAnalyses,
+      aiBoardReports,
+      aiExpenseCategorizer: aiExpenseCategorizations
     });
   } catch (error) {
     console.error('Error fetching dashboard summary:', error);

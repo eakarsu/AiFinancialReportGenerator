@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   FileText, TrendingUp, DollarSign, ArrowRightLeft, PieChart,
   BarChart3, Scale, Target, History, FileSpreadsheet, Lightbulb,
-  AlertTriangle, LineChart, Shield, Receipt, Brain
+  AlertTriangle, LineChart, Shield, Receipt, Brain, Presentation,
+  ClipboardList, Tag
 } from 'lucide-react';
 import { getDashboardSummary, getAlerts } from '../services/api';
+import { CardSkeleton } from '../components/LoadingSkeleton';
 
 const featureCards = [
   { key: 'financialStatements', icon: FileText, label: 'Financial Statements', path: '/financial-statements', color: '#3b82f6', bg: '#eff6ff', description: 'Comprehensive financial reports' },
@@ -23,6 +25,12 @@ const featureCards = [
   { key: 'taxReports', icon: Receipt, label: 'Tax Reports', path: '/tax-reports', color: '#059669', bg: '#ecfdf5', description: 'Tax liability management' },
   { key: 'customReports', icon: FileSpreadsheet, label: 'Custom Reports', path: '/custom-reports', color: '#0891b2', bg: '#ecfeff', description: 'Build custom reports' },
   { key: 'auditLogs', icon: History, label: 'Audit Logs', path: '/audit-logs', color: '#64748b', bg: '#f8fafc', description: 'Activity tracking' },
+  { key: 'aiPresentations', icon: Presentation, label: 'AI Presentations', path: '/ai-presentations', color: '#8b5cf6', bg: '#f5f3ff', description: 'Auto-create slides from reports' },
+  { key: 'aiVarianceExplainer', icon: PieChart, label: 'Variance Explainer', path: '/ai-variance-explainer', color: '#ec4899', bg: '#fdf2f8', description: 'Explain budget differences' },
+  { key: 'aiForecastGenerator', icon: TrendingUp, label: 'Forecast Generator', path: '/ai-forecast-generator', color: '#10b981', bg: '#ecfdf5', description: 'Predictive modeling' },
+  { key: 'aiAuditAnalyzer', icon: Shield, label: 'Audit Analyzer', path: '/ai-audit-analyzer', color: '#7c3aed', bg: '#f5f3ff', description: 'Compliance documentation' },
+  { key: 'aiBoardReports', icon: ClipboardList, label: 'Board Reports', path: '/ai-board-reports', color: '#1e40af', bg: '#eff6ff', description: 'Executive summary generation' },
+  { key: 'aiExpenseCategorizer', icon: Tag, label: 'Expense Categorizer', path: '/ai-expense-categorizer', color: '#f97316', bg: '#fff7ed', description: 'AI-powered expense categorization' },
 ];
 
 function Dashboard() {
@@ -55,8 +63,21 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="loading">
-        <div className="loading-spinner"></div>
+      <div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '32px' }}>
+          {Array(4).fill(0).map((_, i) => (
+            <div key={i} className="card" style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f3f4f6', animation: 'shimmer 1.5s infinite', backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)' }} />
+                <div>
+                  <div style={{ width: '60px', height: '28px', borderRadius: '6px', background: '#f3f4f6', marginBottom: '4px', animation: 'shimmer 1.5s infinite', backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)' }} />
+                  <div style={{ width: '80px', height: '14px', borderRadius: '4px', background: '#f3f4f6', animation: 'shimmer 1.5s infinite', backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)' }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <CardSkeleton count={12} />
       </div>
     );
   }
@@ -66,8 +87,8 @@ function Dashboard() {
   return (
     <div>
       {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '32px' }}>
-        <div className="card" style={{ padding: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+        <div className="card" style={{ padding: '24px', cursor: 'pointer' }} onClick={() => navigate('/ai-insights')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Brain size={24} color="#3b82f6" />
@@ -78,7 +99,7 @@ function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="card" style={{ padding: '24px', cursor: 'pointer' }} onClick={() => navigate('/anomaly-detections')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <AlertTriangle size={24} color="#ef4444" />
@@ -89,7 +110,7 @@ function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="card" style={{ padding: '24px', cursor: 'pointer' }} onClick={() => navigate('/financial-statements')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <FileText size={24} color="#10b981" />
@@ -100,7 +121,7 @@ function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="card" style={{ padding: '24px' }}>
+        <div className="card" style={{ padding: '24px', cursor: 'pointer' }} onClick={() => navigate('/compliance-reports')}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Shield size={24} color="#8b5cf6" />
@@ -120,15 +141,8 @@ function Dashboard() {
           const Icon = card.icon;
           const count = summary[card.key] || 0;
           return (
-            <div
-              key={card.key}
-              className="feature-card"
-              onClick={() => handleCardClick(card.path)}
-            >
-              <div
-                className="feature-card-icon"
-                style={{ background: card.bg }}
-              >
+            <div key={card.key} className="feature-card" onClick={() => handleCardClick(card.path)}>
+              <div className="feature-card-icon" style={{ background: card.bg }}>
                 <Icon size={24} color={card.color} />
               </div>
               <div className="feature-card-title">{card.label}</div>
@@ -149,7 +163,8 @@ function Dashboard() {
                 <div style={{ marginBottom: '24px' }}>
                   <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#ef4444', marginBottom: '12px' }}>Anomalies Detected</h4>
                   {alerts.anomalies.map((anomaly, index) => (
-                    <div key={index} style={{ padding: '12px', background: '#fef2f2', borderRadius: '8px', marginBottom: '8px' }}>
+                    <div key={index} onClick={() => navigate('/anomaly-detections')}
+                      style={{ padding: '12px', background: '#fef2f2', borderRadius: '8px', marginBottom: '8px', cursor: 'pointer', transition: 'all 0.2s' }}>
                       <div style={{ fontWeight: '500' }}>{anomaly.description}</div>
                       <div style={{ fontSize: '13px', color: '#6b7280' }}>Severity: {anomaly.severity}</div>
                     </div>
@@ -160,9 +175,22 @@ function Dashboard() {
                 <div style={{ marginBottom: '24px' }}>
                   <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#f59e0b', marginBottom: '12px' }}>Budget Issues</h4>
                   {alerts.budgetIssues.map((issue, index) => (
-                    <div key={index} style={{ padding: '12px', background: '#fffbeb', borderRadius: '8px', marginBottom: '8px' }}>
+                    <div key={index} onClick={() => navigate('/budget-actuals')}
+                      style={{ padding: '12px', background: '#fffbeb', borderRadius: '8px', marginBottom: '8px', cursor: 'pointer', transition: 'all 0.2s' }}>
                       <div style={{ fontWeight: '500' }}>{issue.department} - {issue.category}</div>
                       <div style={{ fontSize: '13px', color: '#6b7280' }}>Variance: {issue.variance_percentage ? parseFloat(issue.variance_percentage).toFixed(1) : 'N/A'}%</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {alerts.complianceIssues.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#7c3aed', marginBottom: '12px' }}>Compliance Issues</h4>
+                  {alerts.complianceIssues.map((issue, index) => (
+                    <div key={index} onClick={() => navigate('/compliance-reports')}
+                      style={{ padding: '12px', background: '#f5f3ff', borderRadius: '8px', marginBottom: '8px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                      <div style={{ fontWeight: '500' }}>{issue.regulation_type} - {issue.compliance_status}</div>
+                      <div style={{ fontSize: '13px', color: '#6b7280' }}>Period: {issue.report_period}</div>
                     </div>
                   ))}
                 </div>

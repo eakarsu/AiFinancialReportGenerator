@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getCashFlowRecords, getCashFlowRecord, createCashFlowRecord, getCompanies, analyzeCashFlow, deleteCashFlowRecord } from '../services/api';
+import { getCashFlowRecords, getCashFlowRecord, createCashFlowRecord, updateCashFlowRecord, getCompanies, analyzeCashFlow, deleteCashFlowRecord } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -34,7 +35,9 @@ function CashFlow() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -47,6 +50,7 @@ function CashFlow() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load cash flow records');
     } finally {
       setLoading(false);
     }
@@ -68,11 +72,27 @@ function CashFlow() {
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching details:', error);
+      toast.error('Failed to load record details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createCashFlowRecord(formData);
+    toast.success('Cash flow record created successfully!');
+    fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    await updateCashFlowRecord(selectedItem.id, formData);
+    toast.success('Cash flow record updated successfully!');
+    setEditMode(false);
     fetchData();
   };
 
@@ -82,8 +102,10 @@ function CashFlow() {
     try {
       const response = await analyzeCashFlow(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_classification: response.data.analysis });
+      toast.success('AI analysis completed and saved!');
     } catch (error) {
       console.error('Error analyzing:', error);
+      toast.error('AI analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
@@ -91,6 +113,7 @@ function CashFlow() {
 
   const handleDelete = async (id) => {
     await deleteCashFlowRecord(id);
+    toast.success('Cash flow record deleted successfully!');
     fetchData();
   };
 
@@ -121,7 +144,7 @@ function CashFlow() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Cash Flow Records</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add Record</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add Record</button>
         </div>
         <DataTable
           columns={columns}
@@ -141,14 +164,16 @@ function CashFlow() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add Cash Flow Record"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? 'Edit Cash Flow Record' : 'Add Cash Flow Record'}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : {}}
       />
     </div>
   );

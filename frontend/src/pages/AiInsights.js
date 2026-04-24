@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getAiInsights, getAiInsight, createAiInsight, deleteAiInsight, getCompanies } from '../services/api';
+import { getAiInsights, getAiInsight, createAiInsight, updateAiInsight, deleteAiInsight, getCompanies } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -40,6 +41,8 @@ function AiInsights() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -51,7 +54,7 @@ function AiInsights() {
       const response = await getAiInsights();
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch AI insights');
     } finally {
       setLoading(false);
     }
@@ -62,7 +65,7 @@ function AiInsights() {
       const response = await getCompanies();
       setCompanies(response.data);
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      toast.error('Failed to fetch companies');
     }
   };
 
@@ -72,17 +75,38 @@ function AiInsights() {
       setSelectedItem(response.data);
       setModalOpen(true);
     } catch (error) {
-      console.error('Error fetching details:', error);
+      toast.error('Failed to fetch insight details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createAiInsight(formData);
+    toast.success('AI insight created successfully');
     fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    try {
+      await updateAiInsight(selectedItem.id, formData);
+      toast.success('AI insight updated successfully');
+      setFormModalOpen(false);
+      setEditMode(false);
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to update AI insight');
+    }
   };
 
   const handleDelete = async (id) => {
     await deleteAiInsight(id);
+    toast.success('AI insight deleted successfully');
     fetchData();
   };
 
@@ -117,7 +141,7 @@ function AiInsights() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">AI Insights</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add Insight</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add Insight</button>
         </div>
         <DataTable
           columns={columns}
@@ -134,14 +158,16 @@ function AiInsights() {
         data={selectedItem || {}}
         fields={detailFields}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add AI Insight"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? "Edit AI Insight" : "Add AI Insight"}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : null}
       />
     </div>
   );

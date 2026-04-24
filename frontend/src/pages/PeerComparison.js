@@ -15,6 +15,7 @@ import {
   Target
 } from 'lucide-react';
 import * as api from '../services/api';
+import { useToast } from '../components/Toast';
 
 function PeerComparison() {
   const [companies, setCompanies] = useState([]);
@@ -25,6 +26,7 @@ function PeerComparison() {
   const [industry, setIndustry] = useState('');
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchCompanies();
@@ -59,7 +61,7 @@ function PeerComparison() {
 
   const handleCompare = async () => {
     if (selectedCompanies.length < 2) {
-      alert('Please select at least 2 companies to compare');
+      toast.warning('Please select at least 2 companies to compare');
       return;
     }
 

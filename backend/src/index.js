@@ -42,8 +42,17 @@ const monteCarloRoutes = require('./routes/monteCarloSimulation');
 const capitalBudgetingRoutes = require('./routes/capitalBudgeting');
 const breakEvenRoutes = require('./routes/breakEvenAnalysis');
 const workingCapitalRoutes = require('./routes/workingCapitalOptimizer');
+const aiPresentationsRoutes = require('./routes/aiPresentations');
+const aiVarianceExplainerRoutes = require('./routes/aiVarianceExplainer');
+const aiForecastGeneratorRoutes = require('./routes/aiForecastGenerator');
+const aiAuditAnalyzerRoutes = require('./routes/aiAuditAnalyzer');
+const aiBoardReportWriterRoutes = require('./routes/aiBoardReportWriter');
+const aiResponsesRoutes = require('./routes/aiResponses');
+const aiExpenseCategorizerRoutes = require('./routes/aiExpenseCategorizer');
+const authRoutes = require('./routes/auth');
 
 // API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/companies', companiesRoutes);
 app.use('/api/financial-statements', financialStatementsRoutes);
 app.use('/api/revenue-forecasts', revenueForecastsRoutes);
@@ -73,6 +82,13 @@ app.use('/api/monte-carlo', monteCarloRoutes);
 app.use('/api/capital-budgeting', capitalBudgetingRoutes);
 app.use('/api/break-even', breakEvenRoutes);
 app.use('/api/working-capital', workingCapitalRoutes);
+app.use('/api/ai-presentations', aiPresentationsRoutes);
+app.use('/api/ai-variance-explainer', aiVarianceExplainerRoutes);
+app.use('/api/ai-forecast-generator', aiForecastGeneratorRoutes);
+app.use('/api/ai-audit-analyzer', aiAuditAnalyzerRoutes);
+app.use('/api/ai-board-reports', aiBoardReportWriterRoutes);
+app.use('/api/ai-responses', aiResponsesRoutes);
+app.use('/api/ai-expense-categorizer', aiExpenseCategorizerRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

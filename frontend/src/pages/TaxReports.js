@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getTaxReports, getTaxReport, createTaxReport, deleteTaxReport, getCompanies, analyzeTaxReport } from '../services/api';
+import { getTaxReports, getTaxReport, createTaxReport, updateTaxReport, deleteTaxReport, getCompanies, analyzeTaxReport } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -41,6 +42,8 @@ function TaxReports() {
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -52,7 +55,7 @@ function TaxReports() {
       const response = await getTaxReports();
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch tax reports');
     } finally {
       setLoading(false);
     }
@@ -63,7 +66,7 @@ function TaxReports() {
       const response = await getCompanies();
       setCompanies(response.data);
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      toast.error('Failed to fetch companies');
     }
   };
 
@@ -73,13 +76,33 @@ function TaxReports() {
       setSelectedItem(response.data);
       setModalOpen(true);
     } catch (error) {
-      console.error('Error fetching details:', error);
+      toast.error('Failed to fetch tax report details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createTaxReport(formData);
+    toast.success('Tax report created successfully');
     fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    try {
+      await updateTaxReport(selectedItem.id, formData);
+      toast.success('Tax report updated successfully');
+      setFormModalOpen(false);
+      setEditMode(false);
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to update tax report');
+    }
   };
 
   const handleAiAnalyze = async () => {
@@ -89,7 +112,7 @@ function TaxReports() {
       const response = await analyzeTaxReport(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_optimization_suggestions: response.data.analysis });
     } catch (error) {
-      console.error('Error analyzing:', error);
+      toast.error('Failed to analyze tax report');
     } finally {
       setAnalyzing(false);
     }
@@ -97,6 +120,7 @@ function TaxReports() {
 
   const handleDelete = async (id) => {
     await deleteTaxReport(id);
+    toast.success('Tax report deleted successfully');
     fetchData();
   };
 
@@ -137,7 +161,7 @@ function TaxReports() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Tax Reports</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add Tax Report</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add Tax Report</button>
         </div>
         <DataTable
           columns={columns}
@@ -157,14 +181,16 @@ function TaxReports() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add Tax Report"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? "Edit Tax Report" : "Add Tax Report"}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : null}
       />
     </div>
   );

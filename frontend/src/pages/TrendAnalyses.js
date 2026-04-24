@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getTrendAnalyses, getTrendAnalysis, createTrendAnalysis, getCompanies, analyzeTrendRecord, deleteTrendAnalysis } from '../services/api';
+import { getTrendAnalyses, getTrendAnalysis, createTrendAnalysis, updateTrendAnalysis, getCompanies, analyzeTrendRecord, deleteTrendAnalysis } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -41,6 +42,8 @@ function TrendAnalyses() {
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -52,7 +55,7 @@ function TrendAnalyses() {
       const response = await getTrendAnalyses();
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch trend analyses');
     } finally {
       setLoading(false);
     }
@@ -63,7 +66,7 @@ function TrendAnalyses() {
       const response = await getCompanies();
       setCompanies(response.data);
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      toast.error('Failed to fetch companies');
     }
   };
 
@@ -73,13 +76,33 @@ function TrendAnalyses() {
       setSelectedItem(response.data);
       setModalOpen(true);
     } catch (error) {
-      console.error('Error fetching details:', error);
+      toast.error('Failed to fetch trend analysis details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createTrendAnalysis(formData);
+    toast.success('Trend analysis created successfully');
     fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    try {
+      await updateTrendAnalysis(selectedItem.id, formData);
+      toast.success('Trend analysis updated successfully');
+      setFormModalOpen(false);
+      setEditMode(false);
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to update trend analysis');
+    }
   };
 
   const handleAiAnalyze = async () => {
@@ -89,7 +112,7 @@ function TrendAnalyses() {
       const response = await analyzeTrendRecord(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_narrative: response.data.analysis });
     } catch (error) {
-      console.error('Error analyzing:', error);
+      toast.error('Failed to analyze trend');
     } finally {
       setAnalyzing(false);
     }
@@ -97,6 +120,7 @@ function TrendAnalyses() {
 
   const handleDelete = async (id) => {
     await deleteTrendAnalysis(id);
+    toast.success('Trend analysis deleted successfully');
     fetchData();
   };
 
@@ -139,7 +163,7 @@ function TrendAnalyses() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Trend Analyses</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>New Analysis</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>New Analysis</button>
         </div>
         <DataTable
           columns={columns}
@@ -159,14 +183,16 @@ function TrendAnalyses() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="New Trend Analysis"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? "Edit Trend Analysis" : "New Trend Analysis"}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : null}
       />
     </div>
   );

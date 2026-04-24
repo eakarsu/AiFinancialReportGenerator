@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getCustomReports, getCustomReport, createCustomReport, deleteCustomReport, getCompanies, analyzeCustomReport } from '../services/api';
+import { getCustomReports, getCustomReport, createCustomReport, updateCustomReport, deleteCustomReport, getCompanies, analyzeCustomReport } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -38,6 +39,8 @@ function CustomReports() {
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -49,7 +52,7 @@ function CustomReports() {
       const response = await getCustomReports();
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch custom reports');
     } finally {
       setLoading(false);
     }
@@ -60,7 +63,7 @@ function CustomReports() {
       const response = await getCompanies();
       setCompanies(response.data);
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      toast.error('Failed to fetch companies');
     }
   };
 
@@ -70,13 +73,33 @@ function CustomReports() {
       setSelectedItem(response.data);
       setModalOpen(true);
     } catch (error) {
-      console.error('Error fetching details:', error);
+      toast.error('Failed to fetch report details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createCustomReport(formData);
+    toast.success('Custom report created successfully');
     fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    try {
+      await updateCustomReport(selectedItem.id, formData);
+      toast.success('Custom report updated successfully');
+      setFormModalOpen(false);
+      setEditMode(false);
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to update custom report');
+    }
   };
 
   const handleAiAnalyze = async () => {
@@ -86,7 +109,7 @@ function CustomReports() {
       const response = await analyzeCustomReport(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_content: response.data.analysis });
     } catch (error) {
-      console.error('Error analyzing:', error);
+      toast.error('Failed to analyze report');
     } finally {
       setAnalyzing(false);
     }
@@ -94,6 +117,7 @@ function CustomReports() {
 
   const handleDelete = async (id) => {
     await deleteCustomReport(id);
+    toast.success('Custom report deleted successfully');
     fetchData();
   };
 
@@ -124,7 +148,7 @@ function CustomReports() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Custom Reports</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Create Report</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Create Report</button>
         </div>
         <DataTable
           columns={columns}
@@ -144,14 +168,16 @@ function CustomReports() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Create Custom Report"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? "Edit Custom Report" : "Create Custom Report"}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : null}
       />
     </div>
   );

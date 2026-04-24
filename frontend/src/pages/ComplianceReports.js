@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getComplianceReports, getComplianceReport, createComplianceReport, getCompanies, analyzeComplianceReport, deleteComplianceReport } from '../services/api';
+import { getComplianceReports, getComplianceReport, createComplianceReport, updateComplianceReport, getCompanies, analyzeComplianceReport, deleteComplianceReport } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -37,6 +38,8 @@ function ComplianceReports() {
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -48,7 +51,7 @@ function ComplianceReports() {
       const response = await getComplianceReports();
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch compliance reports');
     } finally {
       setLoading(false);
     }
@@ -59,7 +62,7 @@ function ComplianceReports() {
       const response = await getCompanies();
       setCompanies(response.data);
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      toast.error('Failed to fetch companies');
     }
   };
 
@@ -69,13 +72,33 @@ function ComplianceReports() {
       setSelectedItem(response.data);
       setModalOpen(true);
     } catch (error) {
-      console.error('Error fetching details:', error);
+      toast.error('Failed to fetch compliance report details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createComplianceReport(formData);
+    toast.success('Compliance report created successfully');
     fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    try {
+      await updateComplianceReport(selectedItem.id, formData);
+      toast.success('Compliance report updated successfully');
+      setFormModalOpen(false);
+      setEditMode(false);
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to update compliance report');
+    }
   };
 
   const handleAiAnalyze = async () => {
@@ -85,7 +108,7 @@ function ComplianceReports() {
       const response = await analyzeComplianceReport(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_compliance_check: response.data.analysis });
     } catch (error) {
-      console.error('Error analyzing:', error);
+      toast.error('Failed to analyze compliance report');
     } finally {
       setAnalyzing(false);
     }
@@ -93,6 +116,7 @@ function ComplianceReports() {
 
   const handleDelete = async (id) => {
     await deleteComplianceReport(id);
+    toast.success('Compliance report deleted successfully');
     fetchData();
   };
 
@@ -130,7 +154,7 @@ function ComplianceReports() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Compliance Reports</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>New Compliance Check</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>New Compliance Check</button>
         </div>
         <DataTable
           columns={columns}
@@ -150,14 +174,16 @@ function ComplianceReports() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="New Compliance Report"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? "Edit Compliance Report" : "New Compliance Report"}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : null}
       />
     </div>
   );

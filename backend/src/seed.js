@@ -566,6 +566,495 @@ async function seed() {
     }
     console.log('Saved queries seeded: 15');
 
+    // Seed AI Presentations (15 items)
+    const presentationThemes = ['professional', 'modern', 'executive', 'minimal', 'corporate'];
+    const sourceTypes = ['financial_statement', 'quarterly_report', 'annual_report', 'budget_analysis', 'forecast'];
+
+    for (let i = 0; i < 15; i++) {
+      const slidesData = {
+        slides: [
+          { slideNumber: 1, title: 'Title Slide', type: 'title', content: { mainTitle: `Financial Review ${i + 1}`, subtitle: 'Executive Presentation', date: '2024' } },
+          { slideNumber: 2, title: 'Executive Summary', type: 'summary', content: { keyPoints: ['Revenue growth of 15%', 'Cost optimization achieved', 'Market expansion on track'] } },
+          { slideNumber: 3, title: 'Financial Highlights', type: 'metrics', content: { metrics: [{ name: 'Revenue', value: '$10M' }, { name: 'Net Income', value: '$2M' }, { name: 'EBITDA', value: '$3.5M' }] } },
+          { slideNumber: 4, title: 'Performance Analysis', type: 'analysis', content: { keyPoints: ['Q4 exceeded targets by 12%', 'Operating margins improved', 'Customer acquisition up 25%'] } },
+          { slideNumber: 5, title: 'Market Trends', type: 'chart', content: { keyPoints: ['Industry growth at 8% YoY', 'Market share increased to 15%', 'Competitive positioning improved'] } },
+          { slideNumber: 6, title: 'Challenges & Risks', type: 'analysis', content: { keyPoints: ['Supply chain constraints', 'Regulatory changes pending', 'Talent acquisition competitive'] } },
+          { slideNumber: 7, title: 'Strategic Recommendations', type: 'recommendation', content: { recommendations: [{ title: 'Increase R&D investment', description: 'Allocate 15% of revenue to innovation' }, { title: 'Expand into new markets', description: 'Target APAC region in Q2' }] } },
+          { slideNumber: 8, title: 'Conclusion & Next Steps', type: 'conclusion', content: { keyPoints: ['Strong financial performance', 'Clear growth trajectory', 'Action items for Q1 defined'] } }
+        ],
+        metadata: { totalSlides: 8, theme: presentationThemes[i % presentationThemes.length] }
+      };
+
+      await pool.query(
+        `INSERT INTO ai_presentations (company_id, title, description, source_type, slides, theme, status, ai_generated)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, true)`,
+        [
+          companyIds[i % companyIds.length],
+          `Q${(i % 4) + 1} 2024 Financial Presentation ${i + 1}`,
+          `AI-generated presentation for Q${(i % 4) + 1} 2024 financial review`,
+          sourceTypes[i % sourceTypes.length],
+          JSON.stringify(slidesData),
+          presentationThemes[i % presentationThemes.length],
+          i % 3 === 0 ? 'generated' : i % 3 === 1 ? 'reviewed' : 'presented'
+        ]
+      );
+    }
+    console.log('AI Presentations seeded: 15');
+
+    // Seed AI Variance Explanations (15 items)
+    const varianceDepartments = ['Sales', 'Marketing', 'Operations', 'IT', 'HR', 'Finance', 'R&D', 'Legal'];
+    const varianceCategories = ['Salaries', 'Marketing Spend', 'Equipment', 'Software', 'Travel', 'Consulting'];
+
+    for (let i = 0; i < 15; i++) {
+      const budgeted = 50000 + Math.random() * 200000;
+      const actual = budgeted * (0.7 + Math.random() * 0.6);
+      const variance = actual - budgeted;
+      const variancePercent = (variance / budgeted) * 100;
+
+      const rootCauses = [
+        { cause: 'Market conditions changed', likelihood: '65%', evidence: 'Industry reports show similar trends' },
+        { cause: 'Timing differences', likelihood: '25%', evidence: 'Invoices processed in different period' }
+      ];
+
+      const recommendations = [
+        { action: 'Revise budget assumptions', priority: 'high', timeline: '2 weeks', expected_outcome: 'More accurate forecasts' },
+        { action: 'Implement variance alerts', priority: 'medium', timeline: '1 month', expected_outcome: 'Early detection of issues' }
+      ];
+
+      await pool.query(
+        `INSERT INTO ai_variance_explanations (company_id, title, period, department, category, budgeted_amount, actual_amount, variance_amount, variance_percentage, variance_type, root_causes, recommendations, ai_explanation, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        [
+          companyIds[i % companyIds.length],
+          `${varianceDepartments[i % varianceDepartments.length]} ${varianceCategories[i % varianceCategories.length]} Variance`,
+          `Q${(i % 4) + 1} 2024`,
+          varianceDepartments[i % varianceDepartments.length],
+          varianceCategories[i % varianceCategories.length],
+          budgeted.toFixed(2),
+          actual.toFixed(2),
+          variance.toFixed(2),
+          variancePercent.toFixed(2),
+          variance >= 0 ? 'favorable' : 'unfavorable',
+          JSON.stringify(rootCauses),
+          JSON.stringify(recommendations),
+          `The variance of ${variancePercent.toFixed(1)}% is primarily due to market conditions and timing differences. The ${varianceDepartments[i % varianceDepartments.length]} department should review their spending patterns.`,
+          i % 3 === 0 ? 'analyzed' : i % 3 === 1 ? 'pending' : 'reviewed'
+        ]
+      );
+    }
+    console.log('AI Variance Explanations seeded: 15');
+
+    // Seed AI Forecasts (15 items)
+    const forecastTypes = ['revenue', 'expense', 'profit', 'cash_flow', 'growth'];
+    const forecastMetrics = ['Total Revenue', 'Operating Expenses', 'Net Profit', 'Cash Position', 'Market Share'];
+    const forecastMethodologies = ['ARIMA', 'Prophet', 'Linear Regression', 'ML Ensemble', 'Moving Average'];
+
+    for (let i = 0; i < 15; i++) {
+      const predictions = [
+        { period: 'Q1 2025', predicted_value: 1000000 + Math.random() * 500000, growth_rate: 5 + Math.random() * 10, confidence: 85 },
+        { period: 'Q2 2025', predicted_value: 1100000 + Math.random() * 500000, growth_rate: 4 + Math.random() * 8, confidence: 80 },
+        { period: 'Q3 2025', predicted_value: 1200000 + Math.random() * 500000, growth_rate: 3 + Math.random() * 7, confidence: 75 },
+        { period: 'Q4 2025', predicted_value: 1300000 + Math.random() * 500000, growth_rate: 3 + Math.random() * 6, confidence: 70 }
+      ];
+
+      const assumptions = [
+        { assumption: 'Market conditions remain stable', impact: 'High', sensitivity: 'high' },
+        { assumption: 'No major competitor disruption', impact: 'Medium', sensitivity: 'medium' }
+      ];
+
+      const riskFactors = [
+        { risk: 'Economic downturn', probability: 25, potential_impact: '15-20% revenue reduction', mitigation: 'Diversify revenue streams' },
+        { risk: 'Supply chain disruption', probability: 15, potential_impact: '10% cost increase', mitigation: 'Build strategic inventory' }
+      ];
+
+      await pool.query(
+        `INSERT INTO ai_forecasts (company_id, forecast_name, forecast_type, metric_name, time_horizon, predictions, methodology, assumptions, risk_factors, ai_analysis, accuracy_score, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          companyIds[i % companyIds.length],
+          `${forecastMetrics[i % forecastMetrics.length]} Forecast 2025 - ${i + 1}`,
+          forecastTypes[i % forecastTypes.length],
+          forecastMetrics[i % forecastMetrics.length],
+          '12 months',
+          JSON.stringify(predictions),
+          forecastMethodologies[i % forecastMethodologies.length],
+          JSON.stringify(assumptions),
+          JSON.stringify(riskFactors),
+          `This forecast predicts steady growth in ${forecastMetrics[i % forecastMetrics.length]} with ${(75 + Math.random() * 15).toFixed(0)}% confidence. Key drivers include market expansion and operational efficiency improvements.`,
+          (75 + Math.random() * 20).toFixed(2),
+          i % 3 === 0 ? 'active' : i % 3 === 1 ? 'archived' : 'draft'
+        ]
+      );
+    }
+    console.log('AI Forecasts seeded: 15');
+
+    // Seed AI Audit Analyses (15 items)
+    for (let i = 0; i < 15; i++) {
+      const findings = [
+        { gap: 'Access control documentation incomplete', regulation: 'SOX', severity: 'medium', remediation: 'Update access control policies' },
+        { gap: 'Segregation of duties not enforced', regulation: 'SOX', severity: 'high', remediation: 'Implement role-based access controls' }
+      ];
+
+      const highRiskEvents = [
+        { event_type: 'Unauthorized data export', user: 'User ' + (i + 1), timestamp: new Date().toISOString(), risk_reason: 'Large volume of sensitive data', recommended_action: 'Review and investigate' },
+        { event_type: 'Failed login attempts', user: 'User ' + (i + 2), timestamp: new Date().toISOString(), risk_reason: 'Multiple failed attempts from unknown IP', recommended_action: 'Lock account and investigate' }
+      ];
+
+      const patterns = [
+        { pattern: 'After-hours access', frequency: '15 occurrences', concern_level: 'medium', explanation: 'May indicate unauthorized activity' },
+        { pattern: 'Bulk data modifications', frequency: '8 occurrences', concern_level: 'high', explanation: 'Could indicate data tampering' }
+      ];
+
+      const recommendations = [
+        { recommendation: 'Implement real-time monitoring', priority: 'high', category: 'security', expected_impact: 'Early threat detection' },
+        { recommendation: 'Conduct access rights review', priority: 'medium', category: 'compliance', expected_impact: 'Reduced unauthorized access risk' }
+      ];
+
+      await pool.query(
+        `INSERT INTO ai_audit_analyses (company_id, analysis_name, analysis_period, total_events_analyzed, risk_score, compliance_score, findings, high_risk_events, patterns_detected, recommendations, ai_summary, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          companyIds[i % companyIds.length],
+          `Audit Analysis Q${(i % 4) + 1} 2024 - ${i + 1}`,
+          `Q${(i % 4) + 1} 2024`,
+          100 + Math.floor(Math.random() * 500),
+          (50 + Math.random() * 40).toFixed(2),
+          (60 + Math.random() * 35).toFixed(2),
+          JSON.stringify(findings),
+          JSON.stringify(highRiskEvents),
+          JSON.stringify(patterns),
+          JSON.stringify(recommendations),
+          `Comprehensive audit trail analysis for Q${(i % 4) + 1} 2024. Overall risk level is ${i % 3 === 0 ? 'medium' : i % 3 === 1 ? 'low' : 'high'}. Key findings include access control gaps and unusual activity patterns.`,
+          'completed'
+        ]
+      );
+    }
+    console.log('AI Audit Analyses seeded: 15');
+
+    // Seed AI Board Reports (15 items)
+    for (let i = 0; i < 15; i++) {
+      const financialHighlights = {
+        revenue: { current: 10000000 + Math.random() * 5000000, previous: 9000000 + Math.random() * 4000000, change_percent: (5 + Math.random() * 10).toFixed(1), commentary: 'Strong revenue growth driven by new product launches' },
+        profitability: { net_income: 2000000 + Math.random() * 1000000, margin: (15 + Math.random() * 10).toFixed(1) + '%', commentary: 'Improved margins through operational efficiency' },
+        liquidity: { current_ratio: (1.5 + Math.random()).toFixed(2), working_capital: 5000000 + Math.random() * 2000000, commentary: 'Healthy liquidity position maintained' }
+      };
+
+      const keyMetrics = [
+        { metric: 'Revenue Growth', value: '12%', target: '10%', status: 'on_track', trend: 'up', commentary: 'Exceeding target' },
+        { metric: 'Customer Acquisition', value: '1,500', target: '1,200', status: 'on_track', trend: 'up', commentary: 'Strong marketing performance' },
+        { metric: 'Employee Satisfaction', value: '82%', target: '85%', status: 'at_risk', trend: 'stable', commentary: 'Needs improvement' }
+      ];
+
+      const strategicInitiatives = [
+        { initiative: 'Digital Transformation', status: 'on_track', progress_percent: 65, key_milestones: ['Phase 1 Complete', 'Phase 2 In Progress'], next_steps: ['Complete Phase 2'], budget_status: 'on_budget', risks: ['Resource constraints'] },
+        { initiative: 'Market Expansion', status: 'delayed', progress_percent: 40, key_milestones: ['Market Research Done'], next_steps: ['Finalize market entry strategy'], budget_status: 'under_budget', risks: ['Regulatory approval'] }
+      ];
+
+      const riskAssessment = {
+        overall_risk_rating: i % 3 === 0 ? 'medium' : i % 3 === 1 ? 'low' : 'high',
+        top_risks: [
+          { risk: 'Cybersecurity threats', category: 'operational', likelihood: 'medium', impact: 'high', mitigation: 'Enhanced security measures', owner: 'CTO' },
+          { risk: 'Market competition', category: 'strategic', likelihood: 'high', impact: 'medium', mitigation: 'Product differentiation', owner: 'CEO' }
+        ],
+        emerging_risks: ['AI disruption', 'Regulatory changes'],
+        risk_trend: 'stable'
+      };
+
+      const recommendations = [
+        { recommendation: 'Accelerate digital transformation', rationale: 'Competitive advantage', expected_impact: 'Increased efficiency', priority: 'high', timeline: 'Q2 2025', resources_required: '$2M investment', board_action_required: true },
+        { recommendation: 'Expand talent acquisition', rationale: 'Support growth', expected_impact: 'Improved capacity', priority: 'medium', timeline: 'Q3 2025', resources_required: '50 new hires', board_action_required: false }
+      ];
+
+      await pool.query(
+        `INSERT INTO ai_board_reports (company_id, report_title, report_period, executive_summary, financial_highlights, key_metrics, strategic_initiatives, risk_assessment, outlook, recommendations, ai_generated, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, $11)`,
+        [
+          companyIds[i % companyIds.length],
+          `Board Report Q${(i % 4) + 1} 2024 - ${i + 1}`,
+          `Q${(i % 4) + 1} 2024`,
+          `This quarter saw strong performance with revenue growth of ${(8 + Math.random() * 7).toFixed(1)}% and improved operational efficiency. Key achievements include successful product launches and market expansion. Challenges remain in talent acquisition and competitive pressures.`,
+          JSON.stringify(financialHighlights),
+          JSON.stringify(keyMetrics),
+          JSON.stringify(strategicInitiatives),
+          JSON.stringify(riskAssessment),
+          'The outlook for the next quarter is positive with continued growth expected. Focus areas include digital transformation completion and market share expansion.',
+          JSON.stringify(recommendations),
+          i % 3 === 0 ? 'generated' : i % 3 === 1 ? 'reviewed' : 'presented'
+        ]
+      );
+    }
+    console.log('AI Board Reports seeded: 15');
+
+    // Seed AI Expense Categorizations (18 items)
+    const aiExpenseDescriptions = [
+      'AWS Monthly Cloud Services', 'Google Ads Campaign Q4', 'Microsoft Office 365 Subscription',
+      'Team Lunch Meeting - Client Entertainment', 'Uber Business Travel - Airport', 'Adobe Creative Cloud Annual',
+      'Zoom Pro Annual Subscription', 'WeWork Office Space Rent', 'LinkedIn Premium Recruiting',
+      'Salesforce CRM License', 'Employee Training Workshop', 'Legal Consultation Fee',
+      'Office Furniture Purchase', 'Network Security Software', 'Company Retreat Expenses',
+      'Marketing Conference Registration', 'Hardware Equipment - Laptops', 'Professional Certification Course'
+    ];
+    const aiExpenseVendors = [
+      'Amazon Web Services', 'Google', 'Microsoft', 'Local Restaurant', 'Uber', 'Adobe',
+      'Zoom', 'WeWork', 'LinkedIn', 'Salesforce', 'Training Corp', 'Law Firm LLC',
+      'IKEA', 'Norton', 'Resort Hotel', 'TechConf Inc', 'Dell', 'Coursera'
+    ];
+    const aiExpenseCategories = [
+      'Technology', 'Marketing', 'Software', 'Entertainment', 'Travel', 'Software',
+      'Software', 'Facilities', 'Recruiting', 'Software', 'Training', 'Professional Services',
+      'Office Supplies', 'Technology', 'Entertainment', 'Marketing', 'Equipment', 'Training'
+    ];
+    const aiExpenseSubcategories = [
+      'Cloud Services', 'Digital Advertising', 'Productivity Software', 'Client Relations', 'Ground Transport', 'Design Tools',
+      'Communication', 'Office Lease', 'Talent Acquisition', 'CRM', 'Professional Development', 'Legal',
+      'Furniture', 'Security', 'Team Building', 'Conferences', 'Hardware', 'Education'
+    ];
+
+    for (let i = 0; i < 18; i++) {
+      const amount = (100 + Math.random() * 10000).toFixed(2);
+      const confidenceScore = (70 + Math.random() * 25).toFixed(2);
+      const isCategorized = i % 3 !== 0;
+      const isTaxDeductible = i % 4 !== 0;
+
+      const policyCompliance = {
+        is_compliant: i % 5 !== 0,
+        policy_notes: i % 5 === 0 ? 'Expense exceeds department limit without pre-approval' : 'Within policy guidelines',
+        approval_required: parseFloat(amount) > 5000,
+        approval_level: parseFloat(amount) > 5000 ? 'director' : 'manager'
+      };
+
+      const fraudRisk = {
+        risk_level: i % 7 === 0 ? 'medium' : 'low',
+        risk_factors: i % 7 === 0 ? ['Unusual vendor', 'First-time expense type'] : [],
+        recommended_actions: i % 7 === 0 ? ['Request additional documentation', 'Manager review required'] : ['None required']
+      };
+
+      const optimizations = [
+        { suggestion: 'Consider annual subscription for 20% savings', potential_savings: '$' + (parseFloat(amount) * 0.2).toFixed(2), implementation: 'Switch to yearly billing' },
+        { suggestion: 'Negotiate volume discount with vendor', potential_savings: '10-15%', implementation: 'Contact vendor for enterprise pricing' }
+      ];
+
+      await pool.query(
+        `INSERT INTO ai_expense_categorizations (company_id, expense_description, amount, vendor, date, category, subcategory, confidence_score, tax_deductible, gl_account, cost_center, policy_compliance, fraud_risk, optimization_suggestions, ai_reasoning, tags, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+        [
+          companyIds[i % companyIds.length],
+          aiExpenseDescriptions[i],
+          amount,
+          aiExpenseVendors[i],
+          `2024-${String((i % 12) + 1).padStart(2, '0')}-${String((i % 28) + 1).padStart(2, '0')}`,
+          isCategorized ? aiExpenseCategories[i] : null,
+          isCategorized ? aiExpenseSubcategories[i] : null,
+          isCategorized ? confidenceScore : null,
+          isCategorized ? isTaxDeductible : null,
+          isCategorized ? `6${100 + i}-${aiExpenseCategories[i].substring(0, 3).toUpperCase()}` : null,
+          isCategorized ? `CC-${aiExpenseCategories[i].substring(0, 3).toUpperCase()}-001` : null,
+          isCategorized ? JSON.stringify(policyCompliance) : null,
+          isCategorized ? JSON.stringify(fraudRisk) : null,
+          isCategorized ? JSON.stringify(optimizations) : null,
+          isCategorized ? `This expense has been categorized as ${aiExpenseCategories[i]} based on vendor analysis and expense description. The ${aiExpenseSubcategories[i]} subcategory was selected due to the nature of the service/product.` : null,
+          isCategorized ? [aiExpenseCategories[i].toLowerCase(), aiExpenseSubcategories[i].toLowerCase().replace(' ', '-'), 'q4-2024'] : null,
+          isCategorized ? 'categorized' : 'pending'
+        ]
+      );
+    }
+    console.log('AI Expense Categorizations seeded: 18');
+
+    // Seed AI Responses (15 items)
+    const featureTypes = ['kpi_analysis', 'financial_statement', 'variance_analysis', 'forecast', 'audit_analysis', 'board_report', 'expense_categorization'];
+    const featureNames = [
+      'KPI Deep Dive Analysis', 'Revenue Trend Insights', 'Expense Variance Report', 'Q4 Revenue Forecast',
+      'Annual Audit Summary', 'Board Executive Brief', 'Expense Classification', 'Cash Flow Prediction',
+      'Profitability Analysis', 'Budget Variance Explanation', 'Growth Rate Forecast', 'Compliance Review',
+      'Risk Assessment Report', 'Market Comparison Analysis', 'Operational Efficiency Review'
+    ];
+    const responseTypes = ['analysis', 'recommendation', 'summary', 'forecast', 'classification'];
+    for (let i = 0; i < 15; i++) {
+      await pool.query(
+        `INSERT INTO ai_responses (company_id, feature_type, feature_name, prompt_summary, raw_response, parsed_response, response_type, model_used, tokens_used, processing_time_ms, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          companyIds[i % companyIds.length],
+          featureTypes[i % featureTypes.length],
+          featureNames[i],
+          `Analyze ${featureNames[i]} for company ${i + 1} covering Q${(i % 4) + 1} 2024 financial data with focus on key trends and actionable insights.`,
+          `Based on the analysis of the provided financial data, here are the key findings:\n\n1. Revenue showed a ${i % 2 === 0 ? 'positive' : 'negative'} trend of ${(5 + i * 1.5).toFixed(1)}% compared to the previous period.\n2. Operating expenses ${i % 3 === 0 ? 'decreased' : 'increased'} by ${(3 + i).toFixed(1)}%, primarily driven by ${i % 2 === 0 ? 'efficiency improvements' : 'expansion costs'}.\n3. Key recommendations include ${i % 2 === 0 ? 'maintaining current growth trajectory' : 'implementing cost optimization measures'}.\n\nOverall assessment: ${i % 3 === 0 ? 'Strong performance with room for improvement' : i % 3 === 1 ? 'Moderate performance meeting expectations' : 'Areas of concern requiring attention'}.`,
+          JSON.stringify({
+            summary: `Financial ${featureTypes[i % featureTypes.length]} completed successfully`,
+            key_metrics: { growth_rate: (5 + i * 1.5).toFixed(1) + '%', confidence: (75 + i).toFixed(0) + '%' },
+            recommendations: [`Focus on ${i % 2 === 0 ? 'growth' : 'efficiency'}`, `Monitor ${i % 2 === 0 ? 'market trends' : 'cost centers'}`],
+            risk_level: i % 3 === 0 ? 'low' : i % 3 === 1 ? 'medium' : 'high'
+          }),
+          responseTypes[i % responseTypes.length],
+          'anthropic/claude-haiku-4.5',
+          800 + Math.floor(Math.random() * 1200),
+          500 + Math.floor(Math.random() * 3000),
+          'completed'
+        ]
+      );
+    }
+    console.log('AI Responses seeded: 15');
+
+    // Seed Scenario Analyses (15 items)
+    const scenarioTypes = ['best_case', 'worst_case', 'most_likely', 'custom'];
+    for (let i = 0; i < 15; i++) {
+      await pool.query(
+        `INSERT INTO scenario_analyses (company_id, scenario_name, scenario_type, base_values, assumptions, variables, projected_values, impact_summary)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          companyIds[i % companyIds.length],
+          ['Revenue Growth Scenario', 'Cost Reduction Plan', 'Market Expansion', 'Recession Impact', 'New Product Launch',
+           'Merger Synergies', 'Supply Chain Disruption', 'Price Increase Scenario', 'Workforce Reduction', 'Digital Transformation',
+           'Interest Rate Hike', 'Currency Fluctuation', 'Regulatory Change', 'Competitor Entry', 'Technology Investment'][i],
+          scenarioTypes[i % scenarioTypes.length],
+          JSON.stringify({ revenue: 1000000 + i * 200000, expenses: 600000 + i * 100000, net_income: 400000 + i * 100000 }),
+          JSON.stringify({ revenue_growth: (5 + i * 2) + '%', cost_change: (i % 2 === 0 ? '-' : '+') + (3 + i) + '%' }),
+          JSON.stringify({ revenue_change: (i % 2 === 0 ? 1 : -1) * (5 + i * 1.5), expense_change: (i % 3 === 0 ? 1 : -1) * (3 + i) }),
+          JSON.stringify({ projected_revenue: 1000000 + i * 250000, projected_expenses: 600000 + i * 80000, projected_income: 400000 + i * 170000 }),
+          JSON.stringify({ revenue_impact: (i % 2 === 0 ? '+' : '-') + '$' + (50000 + i * 30000), probability: (30 + i * 4) + '%' })
+        ]
+      );
+    }
+    console.log('Scenario Analyses seeded: 15');
+
+    // Seed DCF Valuations (15 items)
+    for (let i = 0; i < 15; i++) {
+      const initialFcf = 500000 + i * 200000;
+      const wacc = (8 + i * 0.5).toFixed(4);
+      const terminalGrowth = (2 + i * 0.1).toFixed(4);
+      const terminalValue = initialFcf * (1 + parseFloat(terminalGrowth) / 100) / (parseFloat(wacc) / 100 - parseFloat(terminalGrowth) / 100);
+      const enterpriseValue = initialFcf * 5 + terminalValue * 0.6;
+
+      await pool.query(
+        `INSERT INTO dcf_valuations (company_id, valuation_name, initial_fcf, projection_years, growth_rates, wacc, terminal_growth_rate, projected_cash_flows, terminal_value, enterprise_value, equity_value, sensitivity_matrix, assumptions)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [
+          companyIds[i % companyIds.length],
+          ['FY2024 DCF Analysis', 'Acquisition Valuation', 'IPO Pricing Model', 'Annual Valuation Update', 'Strategic Review DCF',
+           'Investor Presentation DCF', 'Board Review Valuation', 'Quarterly Update', 'Sensitivity Analysis DCF', 'Conservative Estimate',
+           'Aggressive Growth Model', 'Base Case Valuation', 'Peer Comparison DCF', 'LBO Analysis', 'Sum of Parts Valuation'][i],
+          initialFcf, 5,
+          JSON.stringify([15 - i, 13 - i * 0.5, 11 - i * 0.3, 9 - i * 0.2, 7]),
+          wacc, terminalGrowth,
+          JSON.stringify(Array.from({length: 5}, (_, j) => ({ year: j + 1, fcf: initialFcf * Math.pow(1.1, j + 1), pv: initialFcf * Math.pow(1.1, j + 1) / Math.pow(1 + parseFloat(wacc) / 100, j + 1) }))),
+          terminalValue.toFixed(2), enterpriseValue.toFixed(2), (enterpriseValue * 0.85).toFixed(2),
+          JSON.stringify({ wacc_range: [parseFloat(wacc) - 2, parseFloat(wacc) + 2], growth_range: [1, 4] }),
+          JSON.stringify({ tax_rate: 25, debt_ratio: 30, risk_free_rate: 3.5, market_premium: 5.5 })
+        ]
+      );
+    }
+    console.log('DCF Valuations seeded: 15');
+
+    // Seed Monte Carlo Simulations (15 items)
+    for (let i = 0; i < 15; i++) {
+      const mean = 1000000 + i * 300000;
+      const std = mean * 0.15;
+      await pool.query(
+        `INSERT INTO monte_carlo_simulations (company_id, simulation_name, simulation_type, num_simulations, variables, projection_years, statistics, percentiles, probabilities, var_95, var_99)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          companyIds[i % companyIds.length],
+          ['Revenue Risk Analysis', 'Profit Probability Model', 'Cash Flow Simulation', 'Investment Risk Model', 'Market Risk Assessment',
+           'Portfolio VaR Analysis', 'Budget Risk Simulation', 'Growth Probability', 'Expense Variability', 'NPV Risk Model',
+           'Break-Even Probability', 'Currency Risk Sim', 'Interest Rate Impact', 'Supply Chain Risk', 'Demand Uncertainty'][i],
+          ['profit', 'revenue', 'cash_flow', 'investment', 'portfolio'][i % 5],
+          10000,
+          JSON.stringify({ revenue_growth: { mean: 10 + i, std: 5 }, cost_ratio: { mean: 65 - i * 0.5, std: 4 } }),
+          5,
+          JSON.stringify({ mean: mean, median: mean * 0.98, std: std, min: mean - std * 3, max: mean + std * 3, skewness: 0.1 + i * 0.02 }),
+          JSON.stringify({ p10: mean - std * 1.28, p25: mean - std * 0.67, p50: mean, p75: mean + std * 0.67, p90: mean + std * 1.28, p95: mean + std * 1.65, p99: mean + std * 2.33 }),
+          JSON.stringify({ profit_positive: (75 + i) + '%', target_achievement: (60 + i * 2) + '%', loss_probability: (25 - i) + '%' }),
+          (mean - std * 1.65).toFixed(2),
+          (mean - std * 2.33).toFixed(2)
+        ]
+      );
+    }
+    console.log('Monte Carlo Simulations seeded: 15');
+
+    // Seed Capital Projects (15 items)
+    const projectStatuses = ['draft', 'approved', 'in_progress', 'completed', 'rejected'];
+    for (let i = 0; i < 15; i++) {
+      const investment = 200000 + i * 150000;
+      const annualCf = investment * (0.25 + i * 0.02);
+      const npv = annualCf * 5 - investment;
+      const irr = (10 + i * 1.5).toFixed(4);
+      await pool.query(
+        `INSERT INTO capital_projects (company_id, project_name, initial_investment, cash_flows, discount_rate, project_life, salvage_value, npv, irr, mirr, payback_period, discounted_payback, profitability_index, eaa, decision, status)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+        [
+          companyIds[i % companyIds.length],
+          ['Warehouse Expansion', 'IT Infrastructure Upgrade', 'New Production Line', 'Office Renovation', 'Fleet Modernization',
+           'R&D Lab Setup', 'Retail Store Opening', 'Solar Panel Installation', 'ERP Implementation', 'Distribution Center',
+           'Cloud Migration', 'Manufacturing Robot', 'Customer Portal', 'Data Center Build', 'Automation Project'][i],
+          investment,
+          JSON.stringify(Array.from({length: 5}, (_, j) => annualCf * (1 + j * 0.05))),
+          (8 + i * 0.5).toFixed(4), 5, investment * 0.1,
+          npv.toFixed(2), irr, (parseFloat(irr) - 2).toFixed(4),
+          (investment / annualCf).toFixed(2), (investment / annualCf * 1.15).toFixed(2),
+          (1 + npv / investment).toFixed(4), (npv / 5).toFixed(2),
+          JSON.stringify({ recommendation: npv > 0 ? 'Accept' : 'Reject', confidence: (70 + i * 2) + '%' }),
+          projectStatuses[i % projectStatuses.length]
+        ]
+      );
+    }
+    console.log('Capital Projects seeded: 15');
+
+    // Seed Break-Even Analyses (15 items)
+    for (let i = 0; i < 15; i++) {
+      const fixedCosts = 50000 + i * 25000;
+      const varCostPerUnit = 15 + i * 3;
+      const sellingPrice = 40 + i * 5;
+      const contribMargin = sellingPrice - varCostPerUnit;
+      const breakEvenUnits = fixedCosts / contribMargin;
+      await pool.query(
+        `INSERT INTO break_even_analyses (company_id, analysis_name, fixed_costs, variable_cost_per_unit, selling_price_per_unit, break_even_units, break_even_revenue, contribution_margin, contribution_margin_ratio, margin_of_safety, operating_leverage, sensitivity_data)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          companyIds[i % companyIds.length],
+          ['Product A Break-Even', 'Service Line Analysis', 'New Market Entry', 'Q4 Profitability', 'Product Bundle Analysis',
+           'Subscription Model BE', 'Seasonal Product BE', 'Premium Tier Analysis', 'Enterprise Plan BE', 'Retail Channel BE',
+           'Online Sales Model', 'Wholesale Analysis', 'Export Market BE', 'New SKU Viability', 'Franchise Model BE'][i],
+          fixedCosts, varCostPerUnit, sellingPrice,
+          breakEvenUnits.toFixed(2), (breakEvenUnits * sellingPrice).toFixed(2),
+          contribMargin.toFixed(4), (contribMargin / sellingPrice).toFixed(4),
+          (20 + i * 3).toFixed(4), (2 + i * 0.3).toFixed(4),
+          JSON.stringify({ price_sensitivity: Array.from({length: 5}, (_, j) => ({ price: sellingPrice * (0.8 + j * 0.1), be_units: fixedCosts / (sellingPrice * (0.8 + j * 0.1) - varCostPerUnit) })) })
+        ]
+      );
+    }
+    console.log('Break-Even Analyses seeded: 15');
+
+    // Seed Working Capital Analyses (15 items)
+    for (let i = 0; i < 15; i++) {
+      const ar = 200000 + i * 50000;
+      const inv = 150000 + i * 40000;
+      const ap = 120000 + i * 30000;
+      const rev = 2000000 + i * 300000;
+      const cogs = rev * 0.6;
+      const dso = (ar / rev * 365).toFixed(2);
+      const dio = (inv / cogs * 365).toFixed(2);
+      const dpo = (ap / cogs * 365).toFixed(2);
+      const ccc = (parseFloat(dso) + parseFloat(dio) - parseFloat(dpo)).toFixed(2);
+      await pool.query(
+        `INSERT INTO working_capital_analyses (company_id, analysis_name, accounts_receivable, inventory, accounts_payable, revenue, cogs, dso, dio, dpo, cash_conversion_cycle, working_capital, optimization_potential, recommendations)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        [
+          companyIds[i % companyIds.length],
+          ['Q4 2024 WC Review', 'Annual Optimization', 'Cash Cycle Improvement', 'Inventory Reduction Plan', 'AR Collection Drive',
+           'AP Extension Analysis', 'Seasonal WC Planning', 'Growth Phase WC', 'Efficiency Benchmark', 'Supplier Negotiation Impact',
+           'Lean Inventory Model', 'Dynamic Discounting', 'Factoring Evaluation', 'JIT Implementation', 'WC Forecasting Model'][i],
+          ar, inv, ap, rev, cogs, dso, dio, dpo, ccc,
+          (ar + inv - ap).toFixed(2), ((ar + inv - ap) * 0.15).toFixed(2),
+          JSON.stringify([
+            { action: 'Reduce DSO by 5 days', impact: '$' + (rev / 365 * 5).toFixed(0), priority: 'high' },
+            { action: 'Negotiate DPO extension', impact: '$' + (cogs / 365 * 3).toFixed(0), priority: 'medium' },
+            { action: 'Optimize inventory levels', impact: '$' + (inv * 0.1).toFixed(0), priority: 'medium' }
+          ])
+        ]
+      );
+    }
+    console.log('Working Capital Analyses seeded: 15');
+
     console.log('\nDatabase seeding completed successfully!');
     console.log('Summary:');
     console.log('- Companies: 15');
@@ -588,6 +1077,19 @@ async function seed() {
     console.log('- Scheduled Reports: 15');
     console.log('- Report Execution Logs: 20');
     console.log('- Saved Queries: 15');
+    console.log('- AI Presentations: 15');
+    console.log('- AI Variance Explanations: 15');
+    console.log('- AI Forecasts: 15');
+    console.log('- AI Audit Analyses: 15');
+    console.log('- AI Board Reports: 15');
+    console.log('- AI Expense Categorizations: 18');
+    console.log('- AI Responses: 15');
+    console.log('- Scenario Analyses: 15');
+    console.log('- DCF Valuations: 15');
+    console.log('- Monte Carlo Simulations: 15');
+    console.log('- Capital Projects: 15');
+    console.log('- Break-Even Analyses: 15');
+    console.log('- Working Capital Analyses: 15');
 
   } catch (error) {
     console.error('Error seeding database:', error);

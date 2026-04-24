@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getAnomalyDetections, getAnomalyDetection, createAnomalyDetection, deleteAnomalyDetection, getCompanies, analyzeAnomaly } from '../services/api';
+import { getAnomalyDetections, getAnomalyDetection, createAnomalyDetection, updateAnomalyDetection, deleteAnomalyDetection, getCompanies, analyzeAnomaly } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -44,6 +45,8 @@ function AnomalyDetections() {
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -55,7 +58,7 @@ function AnomalyDetections() {
       const response = await getAnomalyDetections();
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch anomaly detections');
     } finally {
       setLoading(false);
     }
@@ -66,7 +69,7 @@ function AnomalyDetections() {
       const response = await getCompanies();
       setCompanies(response.data);
     } catch (error) {
-      console.error('Error fetching companies:', error);
+      toast.error('Failed to fetch companies');
     }
   };
 
@@ -76,13 +79,33 @@ function AnomalyDetections() {
       setSelectedItem(response.data);
       setModalOpen(true);
     } catch (error) {
-      console.error('Error fetching details:', error);
+      toast.error('Failed to fetch anomaly details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createAnomalyDetection(formData);
+    toast.success('Anomaly detection created successfully');
     fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    try {
+      await updateAnomalyDetection(selectedItem.id, formData);
+      toast.success('Anomaly detection updated successfully');
+      setFormModalOpen(false);
+      setEditMode(false);
+      fetchData();
+    } catch (error) {
+      toast.error('Failed to update anomaly detection');
+    }
   };
 
   const handleAiAnalyze = async () => {
@@ -92,7 +115,7 @@ function AnomalyDetections() {
       const response = await analyzeAnomaly(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_explanation: response.data.analysis });
     } catch (error) {
-      console.error('Error analyzing:', error);
+      toast.error('Failed to analyze anomaly');
     } finally {
       setAnalyzing(false);
     }
@@ -100,6 +123,7 @@ function AnomalyDetections() {
 
   const handleDelete = async (id) => {
     await deleteAnomalyDetection(id);
+    toast.success('Anomaly detection deleted successfully');
     fetchData();
   };
 
@@ -135,7 +159,7 @@ function AnomalyDetections() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Anomaly Detections</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Report Anomaly</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Report Anomaly</button>
         </div>
         <DataTable
           columns={columns}
@@ -155,14 +179,16 @@ function AnomalyDetections() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Report Anomaly"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? "Edit Anomaly Detection" : "Report Anomaly"}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : null}
       />
     </div>
   );

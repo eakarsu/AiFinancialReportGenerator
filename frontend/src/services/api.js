@@ -242,4 +242,67 @@ export const getWorkingCapitalRecommendations = (data) => api.post('/working-cap
 export const createWorkingCapitalAnalysis = (data) => api.post('/working-capital', data);
 export const deleteWorkingCapitalAnalysis = (id) => api.delete(`/working-capital/${id}`);
 
+// AI Presentations
+export const getAiPresentations = (params) => api.get('/ai-presentations', { params });
+export const getAiPresentation = (id) => api.get(`/ai-presentations/${id}`);
+export const createAiPresentation = (data) => api.post('/ai-presentations', data);
+export const updateAiPresentation = (id, data) => api.put(`/ai-presentations/${id}`, data);
+export const deleteAiPresentation = (id) => api.delete(`/ai-presentations/${id}`);
+export const generateAiPresentation = (data) => api.post('/ai-presentations/generate', data);
+
+// AI Variance Explainer
+export const getAiVarianceExplanations = (params) => api.get('/ai-variance-explainer', { params });
+export const getAiVarianceExplanation = (id) => api.get(`/ai-variance-explainer/${id}`);
+export const createAiVarianceExplanation = (data) => api.post('/ai-variance-explainer', data);
+export const updateAiVarianceExplanation = (id, data) => api.put(`/ai-variance-explainer/${id}`, data);
+export const deleteAiVarianceExplanation = (id) => api.delete(`/ai-variance-explainer/${id}`);
+export const analyzeAiVariance = (data) => api.post('/ai-variance-explainer/analyze', data);
+export const bulkAnalyzeVariances = (data) => api.post('/ai-variance-explainer/bulk-analyze', data);
+
+// AI Forecast Generator
+export const getAiForecasts = (params) => api.get('/ai-forecast-generator', { params });
+export const getAiForecast = (id) => api.get(`/ai-forecast-generator/${id}`);
+export const createAiForecast = (data) => api.post('/ai-forecast-generator', data);
+export const updateAiForecast = (id, data) => api.put(`/ai-forecast-generator/${id}`, data);
+export const deleteAiForecast = (id) => api.delete(`/ai-forecast-generator/${id}`);
+export const generateAiForecast = (data) => api.post('/ai-forecast-generator/generate', data);
+export const analyzeAiForecast = (data) => api.post('/ai-forecast-generator/analyze', data);
+
+// AI Audit Analyzer
+export const getAiAuditAnalyses = (params) => api.get('/ai-audit-analyzer', { params });
+export const getAiAuditAnalysis = (id) => api.get(`/ai-audit-analyzer/${id}`);
+export const createAiAuditAnalysis = (data) => api.post('/ai-audit-analyzer', data);
+export const updateAiAuditAnalysis = (id, data) => api.put(`/ai-audit-analyzer/${id}`, data);
+export const deleteAiAuditAnalysis = (id) => api.delete(`/ai-audit-analyzer/${id}`);
+export const analyzeAuditTrail = (data) => api.post('/ai-audit-analyzer/analyze', data);
+export const analyzeAuditEvent = (data) => api.post('/ai-audit-analyzer/analyze-event', data);
+
+// AI Board Reports
+export const getAiBoardReports = (params) => api.get('/ai-board-reports', { params });
+export const getAiBoardReport = (id) => api.get(`/ai-board-reports/${id}`);
+export const createAiBoardReport = (data) => api.post('/ai-board-reports', data);
+export const updateAiBoardReport = (id, data) => api.put(`/ai-board-reports/${id}`, data);
+export const deleteAiBoardReport = (id) => api.delete(`/ai-board-reports/${id}`);
+export const generateAiBoardReport = (data) => api.post('/ai-board-reports/generate', data);
+export const analyzeAiBoardReport = (data) => api.post('/ai-board-reports/analyze', data);
+
+// AI Responses History
+export const getAiResponses = (params) => api.get('/ai-responses', { params });
+export const getAiResponse = (id) => api.get(`/ai-responses/${id}`);
+export const getAiResponseStats = (params) => api.get('/ai-responses/stats/summary', { params });
+export const getAiResponseFeatureTypes = () => api.get('/ai-responses/meta/feature-types');
+export const deleteAiResponse = (id) => api.delete(`/ai-responses/${id}`);
+export const analyzeAiHistory = (data) => api.post('/ai-responses/analyze', data);
+export const summarizeAiResponse = (id) => api.post(`/ai-responses/summarize/${id}`);
+
+// AI Expense Categorizer
+export const getAiExpenseCategorizationsAI = (params) => api.get('/ai-expense-categorizer', { params });
+export const getAiExpenseCategorizationAI = (id) => api.get(`/ai-expense-categorizer/${id}`);
+export const createAiExpenseCategorizationAI = (data) => api.post('/ai-expense-categorizer', data);
+export const updateAiExpenseCategorizationAI = (id, data) => api.put(`/ai-expense-categorizer/${id}`, data);
+export const deleteAiExpenseCategorizationAI = (id) => api.delete(`/ai-expense-categorizer/${id}`);
+export const categorizeExpenseAI = (data) => api.post('/ai-expense-categorizer/categorize', data);
+export const bulkCategorizeExpensesAI = (data) => api.post('/ai-expense-categorizer/bulk-categorize', data);
+export const getExpenseCategorizerStats = (companyId) => api.get(`/ai-expense-categorizer/stats/${companyId}`);
+
 export default api;

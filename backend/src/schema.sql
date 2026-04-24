@@ -2,6 +2,22 @@
 -- Enterprise SaaS Database Structure
 
 -- Drop existing tables if they exist
+DROP TABLE IF EXISTS ai_expense_categorizations CASCADE;
+DROP TABLE IF EXISTS ai_responses CASCADE;
+DROP TABLE IF EXISTS ai_board_reports CASCADE;
+DROP TABLE IF EXISTS ai_audit_analyses CASCADE;
+DROP TABLE IF EXISTS ai_forecasts CASCADE;
+DROP TABLE IF EXISTS ai_variance_explanations CASCADE;
+DROP TABLE IF EXISTS ai_presentations CASCADE;
+DROP TABLE IF EXISTS report_execution_logs CASCADE;
+DROP TABLE IF EXISTS scheduled_reports CASCADE;
+DROP TABLE IF EXISTS saved_queries CASCADE;
+DROP TABLE IF EXISTS working_capital_analyses CASCADE;
+DROP TABLE IF EXISTS break_even_analyses CASCADE;
+DROP TABLE IF EXISTS capital_projects CASCADE;
+DROP TABLE IF EXISTS monte_carlo_simulations CASCADE;
+DROP TABLE IF EXISTS dcf_valuations CASCADE;
+DROP TABLE IF EXISTS scenario_analyses CASCADE;
 DROP TABLE IF EXISTS ai_insights CASCADE;
 DROP TABLE IF EXISTS anomaly_detections CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
@@ -25,6 +41,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),
     role VARCHAR(50) DEFAULT 'analyst',
     company_id UUID,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -494,3 +511,161 @@ CREATE INDEX idx_monte_carlo_simulations_company ON monte_carlo_simulations(comp
 CREATE INDEX idx_capital_projects_company ON capital_projects(company_id);
 CREATE INDEX idx_break_even_analyses_company ON break_even_analyses(company_id);
 CREATE INDEX idx_working_capital_analyses_company ON working_capital_analyses(company_id);
+
+-- AI Presentations
+CREATE TABLE ai_presentations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    source_type VARCHAR(100) NOT NULL,
+    source_id UUID,
+    slides JSONB,
+    theme VARCHAR(50) DEFAULT 'professional',
+    status VARCHAR(20) DEFAULT 'draft',
+    ai_generated BOOLEAN DEFAULT true,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI Variance Explanations
+CREATE TABLE ai_variance_explanations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    title VARCHAR(255) NOT NULL,
+    period VARCHAR(50) NOT NULL,
+    department VARCHAR(100),
+    category VARCHAR(100),
+    budgeted_amount DECIMAL(15,2),
+    actual_amount DECIMAL(15,2),
+    variance_amount DECIMAL(15,2),
+    variance_percentage DECIMAL(8,2),
+    variance_type VARCHAR(20),
+    root_causes JSONB,
+    impact_analysis TEXT,
+    recommendations JSONB,
+    ai_explanation TEXT,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI Forecasts
+CREATE TABLE ai_forecasts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    forecast_name VARCHAR(255) NOT NULL,
+    forecast_type VARCHAR(100) NOT NULL,
+    metric_name VARCHAR(100),
+    time_horizon VARCHAR(50),
+    historical_data JSONB,
+    predictions JSONB,
+    confidence_intervals JSONB,
+    methodology VARCHAR(100),
+    assumptions JSONB,
+    risk_factors JSONB,
+    ai_analysis TEXT,
+    accuracy_score DECIMAL(5,2),
+    status VARCHAR(20) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI Audit Trail Analyses
+CREATE TABLE ai_audit_analyses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    analysis_name VARCHAR(255) NOT NULL,
+    analysis_period VARCHAR(50),
+    total_events_analyzed INTEGER,
+    risk_score DECIMAL(5,2),
+    compliance_score DECIMAL(5,2),
+    findings JSONB,
+    high_risk_events JSONB,
+    patterns_detected JSONB,
+    recommendations JSONB,
+    ai_summary TEXT,
+    status VARCHAR(20) DEFAULT 'completed',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI Board Reports
+CREATE TABLE ai_board_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    report_title VARCHAR(255) NOT NULL,
+    report_period VARCHAR(50) NOT NULL,
+    executive_summary TEXT,
+    financial_highlights JSONB,
+    key_metrics JSONB,
+    strategic_initiatives JSONB,
+    risk_assessment JSONB,
+    outlook TEXT,
+    recommendations JSONB,
+    appendices JSONB,
+    ai_generated BOOLEAN DEFAULT true,
+    status VARCHAR(20) DEFAULT 'draft',
+    presented_date DATE,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI Responses - Store all AI-generated content
+CREATE TABLE ai_responses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    feature_type VARCHAR(100) NOT NULL,
+    feature_name VARCHAR(255) NOT NULL,
+    source_record_id UUID,
+    prompt_summary TEXT,
+    raw_response TEXT,
+    parsed_response JSONB,
+    response_type VARCHAR(50) DEFAULT 'analysis',
+    model_used VARCHAR(100),
+    tokens_used INTEGER,
+    processing_time_ms INTEGER,
+    status VARCHAR(20) DEFAULT 'completed',
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- AI Expense Categorizations
+CREATE TABLE ai_expense_categorizations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    expense_description TEXT NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    vendor VARCHAR(255),
+    date DATE NOT NULL,
+    receipt_text TEXT,
+    category VARCHAR(100),
+    subcategory VARCHAR(100),
+    confidence_score DECIMAL(5,2),
+    tax_deductible BOOLEAN,
+    gl_account VARCHAR(100),
+    cost_center VARCHAR(100),
+    policy_compliance JSONB,
+    fraud_risk JSONB,
+    optimization_suggestions JSONB,
+    ai_reasoning TEXT,
+    tags TEXT[],
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for new tables
+CREATE INDEX idx_ai_expense_categorizations_company ON ai_expense_categorizations(company_id);
+CREATE INDEX idx_ai_expense_categorizations_category ON ai_expense_categorizations(category);
+CREATE INDEX idx_ai_expense_categorizations_status ON ai_expense_categorizations(status);
+CREATE INDEX idx_ai_responses_company ON ai_responses(company_id);
+CREATE INDEX idx_ai_responses_feature ON ai_responses(feature_type);
+CREATE INDEX idx_ai_responses_created ON ai_responses(created_at DESC);
+CREATE INDEX idx_ai_presentations_company ON ai_presentations(company_id);
+CREATE INDEX idx_ai_variance_explanations_company ON ai_variance_explanations(company_id);
+CREATE INDEX idx_ai_forecasts_company ON ai_forecasts(company_id);
+CREATE INDEX idx_ai_audit_analyses_company ON ai_audit_analyses(company_id);
+CREATE INDEX idx_ai_board_reports_company ON ai_board_reports(company_id);

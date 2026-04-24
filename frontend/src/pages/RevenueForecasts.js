@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getRevenueForecasts, getRevenueForecast, createRevenueForecast, getCompanies, analyzeRevenueForecast, deleteRevenueForecast } from '../services/api';
+import { getRevenueForecasts, getRevenueForecast, createRevenueForecast, updateRevenueForecast, getCompanies, analyzeRevenueForecast, deleteRevenueForecast } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -37,7 +38,9 @@ function RevenueForecasts() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -50,6 +53,7 @@ function RevenueForecasts() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load revenue forecasts');
     } finally {
       setLoading(false);
     }
@@ -71,11 +75,27 @@ function RevenueForecasts() {
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching details:', error);
+      toast.error('Failed to load record details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createRevenueForecast(formData);
+    toast.success('Revenue forecast created successfully!');
+    fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    await updateRevenueForecast(selectedItem.id, formData);
+    toast.success('Revenue forecast updated successfully!');
+    setEditMode(false);
     fetchData();
   };
 
@@ -85,8 +105,10 @@ function RevenueForecasts() {
     try {
       const response = await analyzeRevenueForecast(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_analysis: response.data.analysis });
+      toast.success('AI analysis completed and saved!');
     } catch (error) {
       console.error('Error analyzing:', error);
+      toast.error('AI analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
@@ -94,6 +116,7 @@ function RevenueForecasts() {
 
   const handleDelete = async (id) => {
     await deleteRevenueForecast(id);
+    toast.success('Revenue forecast deleted successfully!');
     fetchData();
   };
 
@@ -129,7 +152,7 @@ function RevenueForecasts() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Revenue Forecasts</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add Forecast</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add Forecast</button>
         </div>
         <DataTable
           columns={columns}
@@ -149,14 +172,16 @@ function RevenueForecasts() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add Revenue Forecast"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? 'Edit Revenue Forecast' : 'Add Revenue Forecast'}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : {}}
       />
     </div>
   );

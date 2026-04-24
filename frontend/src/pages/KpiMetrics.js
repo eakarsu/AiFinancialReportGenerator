@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getKpiMetrics, getKpiMetric, createKpiMetric, getCompanies, analyzeKpi, deleteKpiMetric } from '../services/api';
+import { getKpiMetrics, getKpiMetric, createKpiMetric, updateKpiMetric, getCompanies, analyzeKpi, deleteKpiMetric } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -12,7 +13,7 @@ const columns = [
   { key: 'target_value', label: 'Target', render: (val, row) => val ? `${parseFloat(val).toLocaleString()} ${row.unit || ''}` : 'N/A' },
   { key: 'trend', label: 'Trend', render: (val) => (
     <span className={`badge ${val === 'up' ? 'badge-success' : val === 'down' ? 'badge-danger' : 'badge-gray'}`}>
-      {val === 'up' ? '↑ Up' : val === 'down' ? '↓ Down' : '→ Stable'}
+      {val === 'up' ? '^ Up' : val === 'down' ? 'v Down' : '-> Stable'}
     </span>
   )},
   { key: 'period', label: 'Period' }
@@ -38,7 +39,9 @@ function KpiMetrics() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -51,6 +54,7 @@ function KpiMetrics() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load KPI metrics');
     } finally {
       setLoading(false);
     }
@@ -72,11 +76,27 @@ function KpiMetrics() {
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching details:', error);
+      toast.error('Failed to load record details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createKpiMetric(formData);
+    toast.success('KPI metric created successfully!');
+    fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    await updateKpiMetric(selectedItem.id, formData);
+    toast.success('KPI metric updated successfully!');
+    setEditMode(false);
     fetchData();
   };
 
@@ -86,8 +106,10 @@ function KpiMetrics() {
     try {
       const response = await analyzeKpi(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_recommendation: response.data.analysis });
+      toast.success('AI analysis completed and saved!');
     } catch (error) {
       console.error('Error analyzing:', error);
+      toast.error('AI analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
@@ -95,6 +117,7 @@ function KpiMetrics() {
 
   const handleDelete = async (id) => {
     await deleteKpiMetric(id);
+    toast.success('KPI metric deleted successfully!');
     fetchData();
   };
 
@@ -148,7 +171,7 @@ function KpiMetrics() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">KPI Metrics</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add KPI</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add KPI</button>
         </div>
         <DataTable
           columns={columns}
@@ -168,14 +191,16 @@ function KpiMetrics() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add KPI Metric"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? 'Edit KPI Metric' : 'Add KPI Metric'}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : {}}
       />
     </div>
   );

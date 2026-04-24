@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getProfitLossRecords, getProfitLossRecord, createProfitLossRecord, deleteProfitLossRecord, getCompanies, analyzeProfitLoss } from '../services/api';
+import { getProfitLossRecords, getProfitLossRecord, createProfitLossRecord, updateProfitLossRecord, deleteProfitLossRecord, getCompanies, analyzeProfitLoss } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -37,7 +38,9 @@ function ProfitLoss() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -50,6 +53,7 @@ function ProfitLoss() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load profit & loss records');
     } finally {
       setLoading(false);
     }
@@ -71,11 +75,27 @@ function ProfitLoss() {
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching details:', error);
+      toast.error('Failed to load record details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createProfitLossRecord(formData);
+    toast.success('Profit & loss record created successfully!');
+    fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    await updateProfitLossRecord(selectedItem.id, formData);
+    toast.success('Profit & loss record updated successfully!');
+    setEditMode(false);
     fetchData();
   };
 
@@ -85,8 +105,10 @@ function ProfitLoss() {
     try {
       const response = await analyzeProfitLoss(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_insights: response.data.analysis });
+      toast.success('AI analysis completed and saved!');
     } catch (error) {
       console.error('Error analyzing:', error);
+      toast.error('AI analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
@@ -94,6 +116,7 @@ function ProfitLoss() {
 
   const handleDelete = async (id) => {
     await deleteProfitLossRecord(id);
+    toast.success('Profit & loss record deleted successfully!');
     fetchData();
   };
 
@@ -117,7 +140,7 @@ function ProfitLoss() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Profit & Loss Statements</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add P&L Record</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add P&L Record</button>
         </div>
         <DataTable
           columns={columns}
@@ -137,14 +160,16 @@ function ProfitLoss() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add Profit & Loss Record"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? 'Edit Profit & Loss Record' : 'Add Profit & Loss Record'}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : {}}
       />
     </div>
   );

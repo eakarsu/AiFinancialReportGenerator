@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastProvider } from './components/Toast';
+import ErrorBoundary from './components/ErrorBoundary';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import Register from './pages/Register';
+import PasswordReset from './pages/PasswordReset';
 import Dashboard from './pages/Dashboard';
 import FinancialStatements from './pages/FinancialStatements';
 import RevenueForecasts from './pages/RevenueForecasts';
@@ -32,6 +36,13 @@ import MonteCarloSimulation from './pages/MonteCarloSimulation';
 import CapitalBudgeting from './pages/CapitalBudgeting';
 import BreakEvenAnalysis from './pages/BreakEvenAnalysis';
 import WorkingCapitalOptimizer from './pages/WorkingCapitalOptimizer';
+import AiPresentations from './pages/AiPresentations';
+import AiVarianceExplainer from './pages/AiVarianceExplainer';
+import AiForecastGenerator from './pages/AiForecastGenerator';
+import AiAuditAnalyzer from './pages/AiAuditAnalyzer';
+import AiBoardReports from './pages/AiBoardReports';
+import AiResponsesHistory from './pages/AiResponsesHistory';
+import AiExpenseCategorizer from './pages/AiExpenseCategorizer';
 import './App.css';
 
 function App() {
@@ -39,7 +50,6 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
@@ -59,67 +69,82 @@ function App() {
   if (loading) {
     return (
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        background: '#0f172a',
-        color: 'white'
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100vh', background: '#0f172a', color: 'white',
+        flexDirection: 'column', gap: '16px',
       }}>
-        Loading...
+        <div className="loading-spinner" style={{ width: '48px', height: '48px' }}></div>
+        <span>Loading...</span>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
+      <ToastProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
+            <Route path="/register" element={<Register onLogin={handleLogin} />} />
+            <Route path="/password-reset" element={<PasswordReset />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Router>
+      </ToastProvider>
     );
   }
 
   return (
-    <Router>
-      <Layout user={user} onLogout={handleLogout}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/financial-statements" element={<FinancialStatements />} />
-          <Route path="/revenue-forecasts" element={<RevenueForecasts />} />
-          <Route path="/expense-records" element={<ExpenseRecords />} />
-          <Route path="/cash-flow" element={<CashFlow />} />
-          <Route path="/budget-actuals" element={<BudgetActuals />} />
-          <Route path="/profit-loss" element={<ProfitLoss />} />
-          <Route path="/balance-sheets" element={<BalanceSheets />} />
-          <Route path="/kpi-metrics" element={<KpiMetrics />} />
-          <Route path="/audit-logs" element={<AuditLogs />} />
-          <Route path="/custom-reports" element={<CustomReports />} />
-          <Route path="/ai-insights" element={<AiInsights />} />
-          <Route path="/anomaly-detections" element={<AnomalyDetections />} />
-          <Route path="/trend-analyses" element={<TrendAnalyses />} />
-          <Route path="/compliance-reports" element={<ComplianceReports />} />
-          <Route path="/tax-reports" element={<TaxReports />} />
-          <Route path="/ai-chat" element={<AiChat />} />
-          <Route path="/generate-report" element={<GenerateReport />} />
-          <Route path="/profile" element={<UserProfile user={user} />} />
-          <Route path="/financial-ratios" element={<FinancialRatios />} />
-          <Route path="/natural-language-query" element={<NaturalLanguageQuery />} />
-          <Route path="/peer-comparison" element={<PeerComparison />} />
-          <Route path="/export-data" element={<ExportData />} />
-          <Route path="/scheduled-reports" element={<ScheduledReports />} />
-          <Route path="/scenario-analysis" element={<ScenarioAnalysis />} />
-          <Route path="/dcf-valuation" element={<DCFValuation />} />
-          <Route path="/monte-carlo" element={<MonteCarloSimulation />} />
-          <Route path="/capital-budgeting" element={<CapitalBudgeting />} />
-          <Route path="/break-even" element={<BreakEvenAnalysis />} />
-          <Route path="/working-capital" element={<WorkingCapitalOptimizer />} />
-          <Route path="/login" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <ToastProvider>
+      <ErrorBoundary>
+        <Router>
+          <Layout user={user} onLogout={handleLogout}>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/financial-statements" element={<FinancialStatements />} />
+                <Route path="/revenue-forecasts" element={<RevenueForecasts />} />
+                <Route path="/expense-records" element={<ExpenseRecords />} />
+                <Route path="/cash-flow" element={<CashFlow />} />
+                <Route path="/budget-actuals" element={<BudgetActuals />} />
+                <Route path="/profit-loss" element={<ProfitLoss />} />
+                <Route path="/balance-sheets" element={<BalanceSheets />} />
+                <Route path="/kpi-metrics" element={<KpiMetrics />} />
+                <Route path="/audit-logs" element={<AuditLogs />} />
+                <Route path="/custom-reports" element={<CustomReports />} />
+                <Route path="/ai-insights" element={<AiInsights />} />
+                <Route path="/anomaly-detections" element={<AnomalyDetections />} />
+                <Route path="/trend-analyses" element={<TrendAnalyses />} />
+                <Route path="/compliance-reports" element={<ComplianceReports />} />
+                <Route path="/tax-reports" element={<TaxReports />} />
+                <Route path="/ai-chat" element={<AiChat />} />
+                <Route path="/generate-report" element={<GenerateReport />} />
+                <Route path="/profile" element={<UserProfile user={user} onUpdateUser={(u) => { setUser(u); localStorage.setItem('user', JSON.stringify(u)); }} />} />
+                <Route path="/financial-ratios" element={<FinancialRatios />} />
+                <Route path="/natural-language-query" element={<NaturalLanguageQuery />} />
+                <Route path="/peer-comparison" element={<PeerComparison />} />
+                <Route path="/export-data" element={<ExportData />} />
+                <Route path="/scheduled-reports" element={<ScheduledReports />} />
+                <Route path="/scenario-analysis" element={<ScenarioAnalysis />} />
+                <Route path="/dcf-valuation" element={<DCFValuation />} />
+                <Route path="/monte-carlo" element={<MonteCarloSimulation />} />
+                <Route path="/capital-budgeting" element={<CapitalBudgeting />} />
+                <Route path="/break-even" element={<BreakEvenAnalysis />} />
+                <Route path="/working-capital" element={<WorkingCapitalOptimizer />} />
+                <Route path="/ai-presentations" element={<AiPresentations />} />
+                <Route path="/ai-variance-explainer" element={<AiVarianceExplainer />} />
+                <Route path="/ai-forecast-generator" element={<AiForecastGenerator />} />
+                <Route path="/ai-audit-analyzer" element={<AiAuditAnalyzer />} />
+                <Route path="/ai-board-reports" element={<AiBoardReports />} />
+                <Route path="/ai-responses" element={<AiResponsesHistory />} />
+                <Route path="/ai-expense-categorizer" element={<AiExpenseCategorizer />} />
+                <Route path="/login" element={<Navigate to="/" replace />} />
+              </Routes>
+            </ErrorBoundary>
+          </Layout>
+        </Router>
+      </ErrorBoundary>
+    </ToastProvider>
   );
 }
 

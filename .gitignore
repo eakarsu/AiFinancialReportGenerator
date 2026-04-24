@@ -1,47 +1,70 @@
-# Dependencies
-node_modules/
-*/node_modules/
-
-# Environment files
+# Environment / secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+service-account*.json
+gcp-key*.json
+config.local.*
+*.local
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+.yarn/cache/
+.yarn/install-state.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # Build outputs
-build/
 dist/
-*/build/
-*/dist/
-
-# Logs
-logs/
+build/
+.next/
+out/
+.nuxt/
+.vite/
+.turbo/
 *.log
-npm-debug.log*
 
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# IDE
+# OS / IDE
+.DS_Store
 .idea/
 .vscode/
+Thumbs.db
 *.swp
 *.swo
-*~
 
-# OS
-.DS_Store
-Thumbs.db
+# Large data / uploads
+*.sqlite
+*.sqlite3
+*.db
+data/
+uploads/
+tmp/
+.cache/
 
-# Testing
+# Coverage
 coverage/
 .nyc_output/
-
-# Misc
-*.tmp
-*.temp
-.cache/
+htmlcov/

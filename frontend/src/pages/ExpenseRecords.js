@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getExpenseRecords, getExpenseRecord, createExpenseRecord, getCompanies, analyzeExpense, deleteExpenseRecord } from '../services/api';
+import { getExpenseRecords, getExpenseRecord, createExpenseRecord, updateExpenseRecord, getCompanies, analyzeExpense, deleteExpenseRecord } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -37,7 +38,9 @@ function ExpenseRecords() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -50,6 +53,7 @@ function ExpenseRecords() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load expense records');
     } finally {
       setLoading(false);
     }
@@ -71,11 +75,27 @@ function ExpenseRecords() {
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching details:', error);
+      toast.error('Failed to load record details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createExpenseRecord(formData);
+    toast.success('Expense record created successfully!');
+    fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    await updateExpenseRecord(selectedItem.id, formData);
+    toast.success('Expense record updated successfully!');
+    setEditMode(false);
     fetchData();
   };
 
@@ -85,8 +105,10 @@ function ExpenseRecords() {
     try {
       const response = await analyzeExpense(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_categorization: response.data.analysis });
+      toast.success('AI analysis completed and saved!');
     } catch (error) {
       console.error('Error analyzing:', error);
+      toast.error('AI analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
@@ -94,6 +116,7 @@ function ExpenseRecords() {
 
   const handleDelete = async (id) => {
     await deleteExpenseRecord(id);
+    toast.success('Expense record deleted successfully!');
     fetchData();
   };
 
@@ -127,7 +150,7 @@ function ExpenseRecords() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Expense Records</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add Expense</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add Expense</button>
         </div>
         <DataTable
           columns={columns}
@@ -147,14 +170,16 @@ function ExpenseRecords() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add Expense Record"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? 'Edit Expense Record' : 'Add Expense Record'}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : {}}
       />
     </div>
   );

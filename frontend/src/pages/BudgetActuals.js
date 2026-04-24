@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getBudgetActuals, getBudgetActual, createBudgetActual, analyzeBudgetActual, getCompanies, deleteBudgetActual } from '../services/api';
+import { getBudgetActuals, getBudgetActual, createBudgetActual, updateBudgetActual, analyzeBudgetActual, getCompanies, deleteBudgetActual } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -43,7 +44,9 @@ function BudgetActuals() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -56,6 +59,7 @@ function BudgetActuals() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load budget actuals');
     } finally {
       setLoading(false);
     }
@@ -77,6 +81,7 @@ function BudgetActuals() {
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching details:', error);
+      toast.error('Failed to load record details');
     }
   };
 
@@ -86,8 +91,10 @@ function BudgetActuals() {
     try {
       const response = await analyzeBudgetActual(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_explanation: response.data.analysis });
+      toast.success('AI analysis completed and saved!');
     } catch (error) {
       console.error('Error analyzing:', error);
+      toast.error('AI analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
@@ -95,11 +102,27 @@ function BudgetActuals() {
 
   const handleCreate = async (formData) => {
     await createBudgetActual(formData);
+    toast.success('Budget item created successfully!');
+    fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    await updateBudgetActual(selectedItem.id, formData);
+    toast.success('Budget item updated successfully!');
+    setEditMode(false);
     fetchData();
   };
 
   const handleDelete = async (id) => {
     await deleteBudgetActual(id);
+    toast.success('Budget item deleted successfully!');
     fetchData();
   };
 
@@ -145,7 +168,7 @@ function BudgetActuals() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Budget vs Actuals</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add Budget Item</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add Budget Item</button>
         </div>
         <DataTable
           columns={columns}
@@ -165,14 +188,16 @@ function BudgetActuals() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add Budget Item"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? 'Edit Budget Item' : 'Add Budget Item'}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : {}}
       />
     </div>
   );

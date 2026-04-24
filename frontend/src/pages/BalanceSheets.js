@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getBalanceSheets, getBalanceSheet, createBalanceSheet, getCompanies, analyzeBalanceSheet, deleteBalanceSheet } from '../services/api';
+import { getBalanceSheets, getBalanceSheet, createBalanceSheet, updateBalanceSheet, getCompanies, analyzeBalanceSheet, deleteBalanceSheet } from '../services/api';
+import { useToast } from '../components/Toast';
 import DataTable from '../components/DataTable';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
@@ -39,7 +40,9 @@ function BalanceSheets() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     fetchData();
@@ -52,6 +55,7 @@ function BalanceSheets() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      toast.error('Failed to load balance sheets');
     } finally {
       setLoading(false);
     }
@@ -73,11 +77,27 @@ function BalanceSheets() {
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching details:', error);
+      toast.error('Failed to load record details');
     }
   };
 
   const handleCreate = async (formData) => {
     await createBalanceSheet(formData);
+    toast.success('Balance sheet created successfully!');
+    fetchData();
+  };
+
+  const handleEdit = (item) => {
+    setEditMode(true);
+    setSelectedItem(item);
+    setModalOpen(false);
+    setFormModalOpen(true);
+  };
+
+  const handleUpdate = async (formData) => {
+    await updateBalanceSheet(selectedItem.id, formData);
+    toast.success('Balance sheet updated successfully!');
+    setEditMode(false);
     fetchData();
   };
 
@@ -87,8 +107,10 @@ function BalanceSheets() {
     try {
       const response = await analyzeBalanceSheet(selectedItem.id);
       setSelectedItem({ ...selectedItem, ai_analysis: response.data.analysis });
+      toast.success('AI analysis completed and saved!');
     } catch (error) {
       console.error('Error analyzing:', error);
+      toast.error('AI analysis failed. Please try again.');
     } finally {
       setAnalyzing(false);
     }
@@ -96,6 +118,7 @@ function BalanceSheets() {
 
   const handleDelete = async (id) => {
     await deleteBalanceSheet(id);
+    toast.success('Balance sheet deleted successfully!');
     fetchData();
   };
 
@@ -117,7 +140,7 @@ function BalanceSheets() {
       <div className="card">
         <div className="card-header">
           <h3 className="card-title">Balance Sheets</h3>
-          <button className="btn btn-primary" onClick={() => setFormModalOpen(true)}>Add Balance Sheet</button>
+          <button className="btn btn-primary" onClick={() => { setEditMode(false); setFormModalOpen(true); }}>Add Balance Sheet</button>
         </div>
         <DataTable
           columns={columns}
@@ -137,14 +160,16 @@ function BalanceSheets() {
         onAiAnalyze={handleAiAnalyze}
         analyzing={analyzing}
         onDelete={handleDelete}
+        onEdit={handleEdit}
       />
 
       <FormModal
         isOpen={formModalOpen}
-        onClose={() => setFormModalOpen(false)}
-        title="Add Balance Sheet"
+        onClose={() => { setFormModalOpen(false); setEditMode(false); }}
+        title={editMode ? 'Edit Balance Sheet' : 'Add Balance Sheet'}
         fields={formFields}
-        onSubmit={handleCreate}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        initialData={editMode ? selectedItem : {}}
       />
     </div>
   );

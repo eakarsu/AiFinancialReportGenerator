@@ -16,6 +16,8 @@ import {
   Edit
 } from 'lucide-react';
 import * as api from '../services/api';
+import { useToast } from '../components/Toast';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 function ScheduledReports() {
   const [reports, setReports] = useState([]);
@@ -40,6 +42,9 @@ function ScheduledReports() {
     is_active: true
   });
   const [recipientInput, setRecipientInput] = useState('');
+  const toast = useToast();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -69,24 +74,34 @@ function ScheduledReports() {
     try {
       if (editingReport) {
         await api.updateScheduledReport(editingReport.id, formData);
+        toast.success('Scheduled report updated successfully!');
       } else {
         await api.createScheduledReport(formData);
+        toast.success('Scheduled report created successfully!');
       }
       fetchData();
       handleCloseModal();
     } catch (error) {
       console.error('Error saving report:', error);
+      toast.error('Failed to save scheduled report. Please try again.');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this scheduled report?')) {
-      try {
-        await api.deleteScheduledReport(id);
-        fetchData();
-      } catch (error) {
-        console.error('Error deleting report:', error);
-      }
+  const handleDelete = (id) => {
+    setDeleteTargetId(id);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await api.deleteScheduledReport(deleteTargetId);
+      setConfirmOpen(false);
+      setDeleteTargetId(null);
+      toast.success('Scheduled report deleted successfully!');
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      toast.error('Failed to delete scheduled report. Please try again.');
     }
   };
 
@@ -105,9 +120,10 @@ function ScheduledReports() {
       const response = await api.runScheduledReport(id);
       setGeneratedReport(response.data.report);
       fetchData();
+      toast.success('Report generated successfully!');
     } catch (error) {
       console.error('Error running report:', error);
-      alert('Failed to generate report: ' + (error.response?.data?.error || error.message));
+      toast.error('Failed to generate report: ' + (error.response?.data?.error || error.message));
     } finally {
       setGenerating(null);
     }
@@ -697,6 +713,15 @@ function ScheduledReports() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={confirmDelete}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this scheduled report? This action cannot be undone."
+        type="danger"
+      />
 
       <style jsx>{`
         .scheduled-reports-page {
