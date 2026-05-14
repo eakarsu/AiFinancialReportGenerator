@@ -158,7 +158,7 @@ router.post('/analyze', async (req, res) => {
     });
 
     const response = await openai.chat.completions.create({
-      model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet',
+      model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022',
       messages: [
         {
           role: 'system',

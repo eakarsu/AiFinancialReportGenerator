@@ -1,35 +1,46 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { parsePagination, buildPaginatedResponse } = require('../utils/pagination');
 
-// Get all financial statements
+// Get all financial statements (paginated, filterable)
 router.get('/', async (req, res) => {
   try {
+    const { page, limit, offset } = parsePagination(req);
     const { company_id, statement_type, status } = req.query;
-    let query = `
-      SELECT fs.*, c.name as company_name
-      FROM financial_statements fs
-      LEFT JOIN companies c ON fs.company_id = c.id
-      WHERE 1=1
-    `;
     const params = [];
-
+    const where = [];
     if (company_id) {
       params.push(company_id);
-      query += ` AND fs.company_id = $${params.length}`;
+      where.push(`fs.company_id = $${params.length}`);
     }
     if (statement_type) {
       params.push(statement_type);
-      query += ` AND fs.statement_type = $${params.length}`;
+      where.push(`fs.statement_type = $${params.length}`);
     }
     if (status) {
       params.push(status);
-      query += ` AND fs.status = $${params.length}`;
+      where.push(`fs.status = $${params.length}`);
     }
+    const whereClause = where.length ? 'WHERE ' + where.join(' AND ') : '';
 
-    query += ' ORDER BY fs.period_end DESC';
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    const countQ = await pool.query(
+      `SELECT COUNT(*)::int AS c FROM financial_statements fs ${whereClause}`,
+      params
+    );
+    const total = countQ.rows[0].c;
+
+    const data = await pool.query(
+      `SELECT fs.*, c.name as company_name
+         FROM financial_statements fs
+         LEFT JOIN companies c ON fs.company_id = c.id
+         ${whereClause}
+        ORDER BY fs.period_end DESC
+        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, limit, offset]
+    );
+
+    res.json(buildPaginatedResponse(data.rows, total, page, limit));
   } catch (error) {
     console.error('Error fetching financial statements:', error);
     res.status(500).json({ error: 'Failed to fetch financial statements' });

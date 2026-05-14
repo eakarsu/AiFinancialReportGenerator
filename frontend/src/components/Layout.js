@@ -61,6 +61,9 @@ const navItems = [
     { path: '/ai-audit-analyzer', icon: Shield, label: 'Audit Analyzer' },
     { path: '/ai-board-reports', icon: ClipboardList, label: 'Board Reports' },
     { path: '/ai-expense-categorizer', icon: DollarSign, label: 'Expense Categorizer' },
+    { path: '/ai-audit-readiness', icon: Shield, label: 'Audit Readiness' },
+    { path: '/ai-covenant-tracking', icon: ClipboardList, label: 'Covenant Tracking' },
+    { path: '/ai-segment-analysis', icon: PieChart, label: 'Segment Analysis' },
     { path: '/ai-responses', icon: Brain, label: 'AI History' },
   ]},
 ];

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Building2, Mail, Lock, LogIn, Sparkles } from 'lucide-react';
+import { login as loginApi } from '../services/api';
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -20,22 +21,29 @@ function Login({ onLogin }) {
     setLoading(true);
     setError('');
 
-    setTimeout(() => {
-      if (email && password) {
-        const user = {
-          id: '1',
-          email: email,
-          name: email === 'demo@financialreports.ai' ? 'Demo CFO' : 'User',
-          role: 'CFO'
-        };
-        localStorage.setItem('user', JSON.stringify(user));
-        onLogin(user);
-        navigate('/');
-      } else {
-        setError('Please enter email and password');
-      }
+    if (!email || !password) {
+      setError('Please enter email and password');
       setLoading(false);
-    }, 500);
+      return;
+    }
+
+    try {
+      const { data } = await loginApi(email, password);
+      const user = data.user || {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+      };
+      if (data.token) localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(user));
+      onLogin(user);
+      navigate('/');
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

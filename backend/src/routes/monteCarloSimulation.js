@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { authMiddleware } = require('../middleware/auth');
+const { aiRateLimiter } = require('../middleware/rateLimiter');
 
 // Get all simulations for a company
 router.get('/', async (req, res) => {
@@ -29,7 +31,7 @@ router.get('/', async (req, res) => {
 });
 
 // Run Monte Carlo simulation
-router.post('/run', async (req, res) => {
+router.post('/run', authMiddleware, aiRateLimiter, async (req, res) => {
   try {
     const {
       company_id,
@@ -75,8 +77,8 @@ router.post('/run', async (req, res) => {
       }
     }
 
-    // Run simulations
-    const results = [];
+    // Run simulations asynchronously in chunks to avoid blocking the event loop
+    const CHUNK_SIZE = 500;
     const finalValues = {
       revenue: [],
       netIncome: [],
@@ -84,15 +86,28 @@ router.post('/run', async (req, res) => {
       npv: []
     };
 
-    for (let i = 0; i < iterations; i++) {
-      const simulation = runSingleSimulation(baseValues, vars, years);
-      results.push(simulation);
+    await new Promise((resolve) => {
+      let completed = 0;
 
-      finalValues.revenue.push(simulation.finalRevenue);
-      finalValues.netIncome.push(simulation.finalNetIncome);
-      finalValues.profitMargin.push(simulation.finalProfitMargin);
-      finalValues.npv.push(simulation.npv);
-    }
+      function runChunk() {
+        const end = Math.min(completed + CHUNK_SIZE, iterations);
+        for (let i = completed; i < end; i++) {
+          const simulation = runSingleSimulation(baseValues, vars, years);
+          finalValues.revenue.push(simulation.finalRevenue);
+          finalValues.netIncome.push(simulation.finalNetIncome);
+          finalValues.profitMargin.push(simulation.finalProfitMargin);
+          finalValues.npv.push(simulation.npv);
+        }
+        completed = end;
+        if (completed < iterations) {
+          setImmediate(runChunk);
+        } else {
+          resolve();
+        }
+      }
+
+      setImmediate(runChunk);
+    });
 
     // Calculate statistics
     const statistics = {
@@ -151,6 +166,7 @@ router.post('/run', async (req, res) => {
     );
 
     res.json({
+      async: true,
       simulation: result.rows[0],
       summary: {
         iterations,
@@ -174,7 +190,7 @@ router.post('/run', async (req, res) => {
 });
 
 // AI analysis of simulation results
-router.post('/analyze', async (req, res) => {
+router.post('/analyze', authMiddleware, aiRateLimiter, async (req, res) => {
   try {
     const { simulation_id, company_id } = req.body;
 
@@ -207,7 +223,7 @@ router.post('/analyze', async (req, res) => {
     });
 
     const response = await openai.chat.completions.create({
-      model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet',
+      model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022',
       messages: [
         {
           role: 'system',

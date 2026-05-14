@@ -1,9 +1,61 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { authMiddleware } = require('../middleware/auth');
+const { aiRateLimiter } = require('../middleware/rateLimiter');
+const { callOpenRouter, parseAIJson } = require('../services/openrouter');
+const { saveAiResult } = require('../utils/aiResultsStore');
+
+// Stricter sanitization than just keyword filtering. Returns null when valid,
+// otherwise an error string describing the violation.
+function validateSelectOnly(sql) {
+  if (!sql || typeof sql !== 'string') return 'Empty SQL';
+  const upper = sql.toUpperCase();
+
+  // Must start with SELECT or WITH (CTE) and not contain destructive ops.
+  const trimmed = upper.trim();
+  if (!trimmed.startsWith('SELECT') && !trimmed.startsWith('WITH')) {
+    return 'Only SELECT statements are permitted';
+  }
+
+  // Expanded destructive keyword list (now includes CREATE, COPY, GRANT,
+  // REVOKE, VACUUM, ANALYZE, EXPLAIN ANALYZE, DO blocks, multiple statements).
+  const DESTRUCTIVE_KEYWORDS = [
+    'DROP', 'DELETE', 'UPDATE', 'INSERT', 'TRUNCATE', 'ALTER',
+    'CREATE', 'COPY', 'GRANT', 'REVOKE', 'VACUUM',
+    'CALL', 'EXECUTE', 'PREPARE', 'NOTIFY', 'LISTEN', 'UNLISTEN',
+    'LOCK', 'COMMENT', 'CLUSTER', 'REINDEX', 'REFRESH', 'IMPORT',
+  ];
+  for (const kw of DESTRUCTIVE_KEYWORDS) {
+    const re = new RegExp(`\\b${kw}\\b`);
+    if (re.test(upper)) {
+      return `Destructive keyword detected: ${kw}`;
+    }
+  }
+
+  // Block multiple-statement injection
+  const noStrings = upper.replace(/'(?:''|[^'])*'/g, "''").replace(/--.*$/gm, '');
+  if (/;\s*\S/.test(noStrings)) {
+    return 'Multiple SQL statements not allowed';
+  }
+
+  // Block dangerous functions (pg_sleep DoS, system functions, lo_*).
+  const DANGEROUS_FUNCS = [
+    'PG_SLEEP', 'PG_TERMINATE_BACKEND', 'PG_CANCEL_BACKEND',
+    'PG_READ_FILE', 'PG_LS_DIR', 'PG_READ_BINARY_FILE',
+    'LO_IMPORT', 'LO_EXPORT', 'DBLINK',
+  ];
+  for (const fn of DANGEROUS_FUNCS) {
+    if (new RegExp(`\\b${fn}\\b`).test(upper)) {
+      return `Dangerous function not allowed: ${fn}`;
+    }
+  }
+  return null;
+}
 
 // Process natural language query
-router.post('/query', async (req, res) => {
+router.post('/query', authMiddleware, aiRateLimiter, async (req, res) => {
+  const startedAt = Date.now();
   try {
     const { query, company_id } = req.body;
 
@@ -11,40 +63,35 @@ router.post('/query', async (req, res) => {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    const OpenAI = require('openai');
-    const openai = new OpenAI({
-      baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: process.env.OPENROUTER_API_KEY,
-    });
-
-    // Get company context
-    let companyContext = '';
+    // Sanitize company_id: must be a UUID or integer-looking string. We refuse
+    // anything else to avoid prompt-injection and downstream SQL injection
+    // through the LLM-generated query.
+    let safeCompanyId = null;
     if (company_id) {
-      const companyResult = await pool.query(
-        'SELECT * FROM companies WHERE id = $1',
-        [company_id]
-      );
-      if (companyResult.rows[0]) {
-        companyContext = `Company: ${companyResult.rows[0].name}, Industry: ${companyResult.rows[0].industry}`;
+      const idStr = String(company_id);
+      if (/^[0-9a-fA-F-]{1,64}$/.test(idStr)) {
+        safeCompanyId = idStr;
+      } else {
+        return res.status(400).json({ error: 'Invalid company_id format' });
       }
     }
 
-    // First, understand the intent and extract SQL
-    const intentResponse = await openai.chat.completions.create({
-      model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a financial data analyst assistant. Convert natural language queries into SQL queries for a PostgreSQL database.
+    // Get company context
+    let companyContext = '';
+    if (safeCompanyId) {
+      const companyResult = await pool.query(
+        'SELECT * FROM companies WHERE id = $1',
+        [safeCompanyId]
+      );
+      if (companyResult.rows[0]) {
+        const c = companyResult.rows[0];
+        companyContext = `Company: ${String(c.name).slice(0, 200)}, Industry: ${String(c.industry || '').slice(0, 200)}`;
+      }
+    }
 
-CRITICAL: Use PostgreSQL syntax only.
+    const systemPrompt = `You are a financial data analyst assistant. Convert natural language queries into SQL queries for a PostgreSQL database.
 
-**CRITICAL WARNING - READ CAREFULLY:**
-NEVER use EXTRACT() on VARCHAR/TEXT columns! It will cause an error.
-- EXTRACT() only works on DATE/TIMESTAMP columns
-- For VARCHAR period columns like 'period', use string matching (=, LIKE)
-
-COLUMN TYPES - MEMORIZE THIS:
+CRITICAL: Use PostgreSQL syntax only. Only use SELECT queries. Never modify data.
 
 DATE COLUMNS (CAN use EXTRACT):
 - financial_statements.period_start, financial_statements.period_end
@@ -53,33 +100,17 @@ DATE COLUMNS (CAN use EXTRACT):
 - balance_sheets.as_of_date
 - anomaly_detections.detection_date
 
-VARCHAR COLUMNS (CANNOT use EXTRACT - use string matching):
-- profit_loss_records.period → contains strings like 'Q1 2025'
-- budget_actuals.period → contains strings like 'Q1 2025'
-- kpi_metrics.period → contains strings like 'Q1 2025'
-- revenue_forecasts.forecast_period → contains strings like 'Q1 2025'
+VARCHAR period columns (CANNOT use EXTRACT, use string matching like 'Q1 2025'):
+- profit_loss_records.period
+- budget_actuals.period
+- kpi_metrics.period
+- revenue_forecasts.forecast_period
 
-CORRECT EXAMPLES:
-- profit_loss_records query for Q2 2025: WHERE period = 'Q2 2025'
-- profit_loss_records query for 2025: WHERE period LIKE '%2025%'
-- expense_records query for Q2 2025: WHERE EXTRACT(QUARTER FROM date) = 2 AND EXTRACT(YEAR FROM date) = 2025
+Available tables: companies, financial_statements, balance_sheets, profit_loss_records,
+expense_records, cash_flow_records, budget_actuals, kpi_metrics, revenue_forecasts,
+anomaly_detections.
 
-WRONG (will cause error):
-- WHERE EXTRACT(QUARTER FROM period) = 2  ← WRONG! period is VARCHAR not DATE
-
-Available tables (with column types noted for period/date columns):
-- companies (id, name, industry, fiscal_year_end, currency)
-- financial_statements (id, company_id, statement_type, period_start DATE, period_end DATE, total_revenue, total_expenses, net_income, status)
-- balance_sheets (id, company_id, as_of_date DATE, total_assets, current_assets, fixed_assets, total_liabilities, current_liabilities, long_term_liabilities, shareholders_equity, retained_earnings)
-- profit_loss_records (id, company_id, period VARCHAR like 'Q1 2025', revenue, cost_of_goods_sold, gross_profit, operating_expenses, operating_income, net_income, earnings_per_share)
-- expense_records (id, company_id, category, subcategory, amount, date DATE, vendor, description, status)
-- cash_flow_records (id, company_id, record_type, category, amount, date DATE, description)
-- budget_actuals (id, company_id, department, category, period VARCHAR like 'Q1 2025', budgeted_amount, actual_amount, variance, variance_percentage)
-- kpi_metrics (id, company_id, metric_name, metric_category, current_value, target_value, previous_value, unit, trend, period VARCHAR like 'Q1 2025')
-- revenue_forecasts (id, company_id, forecast_name, forecast_period VARCHAR like 'Q1 2025', predicted_revenue, confidence_level, model_used)
-- anomaly_detections (id, company_id, anomaly_type, severity, description, affected_metric, expected_value, actual_value, deviation_percentage, resolution_status)
-
-${company_id ? `Filter by company_id = '${company_id}' when relevant.` : ''}
+${safeCompanyId ? `Filter by company_id = '${safeCompanyId}' when relevant.` : ''}
 
 Respond with JSON containing:
 {
@@ -87,107 +118,157 @@ Respond with JSON containing:
   "sql": "the SQL query to execute",
   "visualization": "table|chart|metric|comparison",
   "chartType": "bar|line|pie|none"
-}
+}`;
 
-Only use SELECT queries. Never modify data.`
-        },
-        {
-          role: 'user',
-          content: `${companyContext}\n\nQuery: ${query}`
-        }
+    // First, understand the intent and extract SQL
+    const intentResp = await callOpenRouter(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `${companyContext}\n\nQuery: ${query}` },
       ],
-      temperature: 0.1,
-    });
-
-    const intentText = intentResponse.choices[0].message.content;
-    let parsedIntent;
-
-    try {
-      const jsonMatch = intentText.match(/\{[\s\S]*\}/);
-      parsedIntent = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
-    } catch {
-      parsedIntent = null;
-    }
+      { temperature: 0.1 }
+    );
+    const parsedIntent = parseAIJson(intentResp.content);
 
     if (!parsedIntent || !parsedIntent.sql) {
-      // If we can't parse SQL, provide a conversational response
-      const conversationalResponse = await openai.chat.completions.create({
-        model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet',
-        messages: [
+      // Conversational fallback
+      const conv = await callOpenRouter(
+        [
           {
             role: 'system',
-            content: 'You are a helpful financial analyst assistant. Answer questions about financial data analysis, metrics, and best practices.'
+            content:
+              'You are a helpful financial analyst assistant. Answer questions about financial data analysis, metrics, and best practices.',
           },
-          {
-            role: 'user',
-            content: query
-          }
+          { role: 'user', content: query },
         ],
-        temperature: 0.7,
+        { temperature: 0.7 }
+      );
+      await saveAiResult({
+        feature: 'nlq.conversational',
+        user_id: req.user?.id,
+        company_id: safeCompanyId,
+        input: { query },
+        output: { response: conv.content },
+        raw: conv.content,
+        model: conv.model,
+        duration_ms: Date.now() - startedAt,
       });
-
       return res.json({
         type: 'conversational',
-        query: query,
-        response: conversationalResponse.choices[0].message.content,
-        data: null
+        query,
+        response: conv.content,
+        data: null,
       });
     }
 
-    // Execute the SQL query
-    let queryResult;
-    try {
-      // Add safety check - only allow SELECT
-      if (!parsedIntent.sql.trim().toUpperCase().startsWith('SELECT')) {
-        throw new Error('Only SELECT queries are allowed');
+    // Validate the SQL
+    const violation = validateSelectOnly(parsedIntent.sql);
+    if (violation) {
+      try {
+        await pool.query(
+          `INSERT INTO audit_logs (action, table_name, record_id, user_id, details, created_at)
+           VALUES ($1,$2,$3,$4,$5,NOW())`,
+          [
+            'BLOCKED_DESTRUCTIVE_NLQ',
+            'natural_language_query',
+            null,
+            req.user?.id || null,
+            JSON.stringify({ violation, query, sql: parsedIntent.sql }),
+          ]
+        );
+      } catch (auditErr) {
+        console.warn('Audit log insert failed:', auditErr.message);
       }
+      await saveAiResult({
+        feature: 'nlq.blocked',
+        user_id: req.user?.id,
+        company_id: safeCompanyId,
+        input: { query },
+        output: { violation, sql: parsedIntent.sql },
+        status: 'blocked',
+        error: violation,
+        duration_ms: Date.now() - startedAt,
+      });
+      return res.status(400).json({
+        error: 'Query not allowed',
+        reason: violation,
+      });
+    }
 
-      queryResult = await pool.query(parsedIntent.sql);
+    // Execute the SQL query (read-only client transaction would be ideal —
+    // here we wrap in a transaction set to read-only as defense in depth.)
+    let queryResult;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN READ ONLY');
+      // Add a 5s statement timeout to prevent runaway queries.
+      await client.query("SET LOCAL statement_timeout = '5000ms'");
+      queryResult = await client.query(parsedIntent.sql);
+      await client.query('COMMIT');
     } catch (sqlError) {
+      try { await client.query('ROLLBACK'); } catch (_) {}
       console.error('SQL Error:', sqlError);
       return res.json({
         type: 'error',
-        query: query,
+        query,
         intent: parsedIntent.intent,
         error: 'Could not execute query. Please try rephrasing.',
-        sql: parsedIntent.sql
+        sql: parsedIntent.sql,
       });
+    } finally {
+      client.release();
     }
 
     // Generate natural language summary of results
-    const summaryResponse = await openai.chat.completions.create({
-      model: process.env.OPENROUTER_MODEL || 'anthropic/claude-3.5-sonnet',
-      messages: [
+    const summaryResp = await callOpenRouter(
+      [
         {
           role: 'system',
-          content: 'You are a financial analyst. Provide a clear, concise summary of the data results. Include key insights and any notable patterns.'
+          content:
+            'You are a financial analyst. Provide a clear, concise summary of the data results. Include key insights and any notable patterns.',
         },
         {
           role: 'user',
-          content: `Original question: ${query}\n\nData results:\n${JSON.stringify(queryResult.rows.slice(0, 20), null, 2)}\n\nProvide a brief summary (2-3 sentences) of these findings.`
-        }
+          content: `Original question: ${query}\n\nData results:\n${JSON.stringify(
+            queryResult.rows.slice(0, 20),
+            null,
+            2
+          )}\n\nProvide a brief summary (2-3 sentences) of these findings.`,
+        },
       ],
-      temperature: 0.5,
-    });
+      { temperature: 0.5 }
+    );
 
-    res.json({
+    const payload = {
       type: 'data',
-      query: query,
+      query,
       intent: parsedIntent.intent,
-      summary: summaryResponse.choices[0].message.content,
+      summary: summaryResp.content,
       visualization: parsedIntent.visualization || 'table',
       chartType: parsedIntent.chartType || 'none',
       data: queryResult.rows,
       rowCount: queryResult.rows.length,
-      sql: parsedIntent.sql
+      sql: parsedIntent.sql,
+    };
+
+    await saveAiResult({
+      feature: 'nlq.query',
+      user_id: req.user?.id,
+      company_id: safeCompanyId,
+      input: { query },
+      output: { intent: parsedIntent.intent, sql: parsedIntent.sql, rowCount: payload.rowCount, summary: summaryResp.content },
+      model: summaryResp.model,
+      duration_ms: Date.now() - startedAt,
     });
+
+    res.json(payload);
   } catch (error) {
     console.error('Error processing natural language query:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get suggested queries
+// Get suggested queries (auth applied at index.js, but kept for clarity)
 router.get('/suggestions', async (req, res) => {
   try {
     const suggestions = [
@@ -197,8 +278,8 @@ router.get('/suggestions', async (req, res) => {
           'Show me total revenue by quarter',
           'What is our gross profit margin trend?',
           'Compare revenue vs expenses over time',
-          'Which period had the highest net income?'
-        ]
+          'Which period had the highest net income?',
+        ],
       },
       {
         category: 'Balance Sheet',
@@ -206,8 +287,8 @@ router.get('/suggestions', async (req, res) => {
           'Show current assets vs current liabilities',
           'What is our debt to equity ratio?',
           'How has shareholders equity changed?',
-          'Show total assets breakdown'
-        ]
+          'Show total assets breakdown',
+        ],
       },
       {
         category: 'Expenses',
@@ -215,8 +296,8 @@ router.get('/suggestions', async (req, res) => {
           'What are the top 5 expense categories?',
           'Show expenses by department',
           'Which vendors have the highest spending?',
-          'Are there any expense anomalies?'
-        ]
+          'Are there any expense anomalies?',
+        ],
       },
       {
         category: 'KPIs & Performance',
@@ -224,8 +305,8 @@ router.get('/suggestions', async (req, res) => {
           'Show all KPIs with negative trends',
           'Which KPIs are below target?',
           'Display customer acquisition metrics',
-          'What is our revenue per employee?'
-        ]
+          'What is our revenue per employee?',
+        ],
       },
       {
         category: 'Forecasts & Trends',
@@ -233,8 +314,8 @@ router.get('/suggestions', async (req, res) => {
           'Show revenue forecasts for next quarter',
           'What is the predicted growth rate?',
           'Display trend analysis for all metrics',
-          'Which forecasts have high confidence?'
-        ]
+          'Which forecasts have high confidence?',
+        ],
       },
       {
         category: 'Compliance & Risk',
@@ -242,9 +323,9 @@ router.get('/suggestions', async (req, res) => {
           'Show compliance status across all regulations',
           'Are there any open anomalies?',
           'What is our overall compliance score?',
-          'List high severity issues'
-        ]
-      }
+          'List high severity issues',
+        ],
+      },
     ];
 
     res.json(suggestions);
@@ -254,8 +335,8 @@ router.get('/suggestions', async (req, res) => {
   }
 });
 
-// Save a query for quick access
-router.post('/save', async (req, res) => {
+// Save a query for quick access — paginated list endpoint below
+router.post('/save', authMiddleware, async (req, res) => {
   try {
     const { company_id, query_name, query_text, visualization_type } = req.body;
 
@@ -273,23 +354,45 @@ router.post('/save', async (req, res) => {
   }
 });
 
-// Get saved queries
-router.get('/saved', async (req, res) => {
+// Get saved queries (paginated)
+router.get('/saved', authMiddleware, async (req, res) => {
   try {
     const { company_id } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+    const offset = (page - 1) * limit;
 
-    let query = 'SELECT * FROM saved_queries';
     const params = [];
-
+    let where = '';
     if (company_id) {
-      query += ' WHERE company_id = $1';
       params.push(company_id);
+      where = `WHERE company_id = $${params.length}`;
     }
 
-    query += ' ORDER BY created_at DESC';
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS c FROM saved_queries ${where}`,
+      params
+    );
+    const total = countResult.rows[0].c;
 
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    params.push(limit);
+    params.push(offset);
+    const dataResult = await pool.query(
+      `SELECT * FROM saved_queries ${where}
+       ORDER BY created_at DESC
+       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+      params
+    );
+
+    res.json({
+      data: dataResult.rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 1,
+      },
+    });
   } catch (error) {
     console.error('Error fetching saved queries:', error);
     res.status(500).json({ error: error.message });
@@ -297,7 +400,7 @@ router.get('/saved', async (req, res) => {
 });
 
 // Delete saved query
-router.delete('/saved/:id', async (req, res) => {
+router.delete('/saved/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     await pool.query('DELETE FROM saved_queries WHERE id = $1', [id]);

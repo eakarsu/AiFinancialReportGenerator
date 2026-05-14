@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Building2, Mail, Lock, UserPlus, User, Briefcase, AlertCircle } from 'lucide-react';
+import { register as registerApi } from '../services/api';
 
 function Register({ onLogin }) {
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '', role: 'analyst' });
@@ -42,19 +43,19 @@ function Register({ onLogin }) {
     setLoading(true);
     setServerError('');
     try {
-      // Simulate registration API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      const user = {
-        id: Date.now().toString(),
-        email: formData.email,
+      const { data } = await registerApi({
         name: formData.name,
+        email: formData.email,
+        password: formData.password,
         role: formData.role,
-      };
+      });
+      const user = data.user || data;
+      if (data.token) localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(user));
       onLogin(user);
       navigate('/');
     } catch (error) {
-      setServerError('Registration failed. Please try again.');
+      setServerError(error?.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
