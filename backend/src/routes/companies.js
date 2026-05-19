@@ -1,12 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { parsePagination, buildPaginatedResponse } = require('../utils/pagination');
 
-// Get all companies
+// Get all companies (paginated)
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM companies ORDER BY created_at DESC');
-    res.json(result.rows);
+    const { page, limit, offset } = parsePagination(req);
+    const countResult = await pool.query('SELECT COUNT(*)::int AS c FROM companies');
+    const total = countResult.rows[0].c;
+    const result = await pool.query(
+      'SELECT * FROM companies ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+      [limit, offset]
+    );
+    res.json(buildPaginatedResponse(result.rows, total, page, limit));
   } catch (error) {
     console.error('Error fetching companies:', error);
     res.status(500).json({ error: 'Failed to fetch companies' });

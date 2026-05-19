@@ -9,6 +9,41 @@ const api = axios.create({
   },
 });
 
+// Attach JWT bearer token from localStorage on every request.
+api.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return config;
+});
+
+// Auto-logout on 401.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } catch (_) {}
+    }
+    return Promise.reject(error);
+  }
+);
+
+// --- Auth API ---
+export const login = (email, password) => api.post('/auth/login', { email, password });
+export const register = (data) => api.post('/auth/register', data);
+export const requestPasswordReset = (email) => api.post('/auth/password-reset/request', { email });
+export const confirmPasswordReset = (data) => api.post('/auth/password-reset/confirm', data);
+export const getMyProfile = (userId) => api.get('/auth/profile', { params: { user_id: userId } });
+export const updateMyProfile = (data) => api.put('/auth/profile', data);
+
 // Dashboard
 export const getDashboardSummary = () => api.get('/dashboard/summary');
 export const getRecentActivity = () => api.get('/dashboard/recent-activity');
@@ -304,5 +339,35 @@ export const deleteAiExpenseCategorizationAI = (id) => api.delete(`/ai-expense-c
 export const categorizeExpenseAI = (data) => api.post('/ai-expense-categorizer/categorize', data);
 export const bulkCategorizeExpensesAI = (data) => api.post('/ai-expense-categorizer/bulk-categorize', data);
 export const getExpenseCategorizerStats = (companyId) => api.get(`/ai-expense-categorizer/stats/${companyId}`);
+
+// AI batch_03 follow-ups (audit-readiness, covenant-tracking, segment-analysis)
+export const aiAuditReadiness = (data) => api.post('/ai/audit-readiness', data);
+export const aiCovenantTracking = (data) => api.post('/ai/covenant-tracking', data);
+export const aiSegmentAnalysis = (data) => api.post('/ai/segment-analysis', data);
+
+// Apply pass 5 backlog endpoints
+export const aiAgenticCFO = (data) => api.post('/ai/agentic-cfo', data);
+export const aiPredictiveCashFlow = (data) => api.post('/ai/predictive-cash-flow', data);
+export const aiESGFinancialLinkage = (data) => api.post('/ai/esg-financial-linkage', data);
+export const aiRealtimeKPIs = (companyId) => api.get('/ai/realtime-kpis', { params: companyId ? { company_id: companyId } : {} });
+export const aiConsolidate = (data) => api.post('/ai/consolidate', data);
+export const aiCreateApproval = (data) => api.post('/ai/approvals', data);
+export const aiListApprovals = () => api.get('/ai/approvals');
+export const aiDecideApproval = (id, data) => api.post(`/ai/approvals/${id}/decide`, data);
+export const aiQuickBooksStatus = () => api.get('/ai/integrations/quickbooks/status');
+export const aiNetSuiteStatus = () => api.get('/ai/integrations/netsuite/status');
+export const aiFXRates = (base) => api.get('/ai/fx/rates', { params: base ? { base } : {} });
+
+// --- Custom Views API ---
+export const getRevenueExpenseTrend = (year) =>
+  api.get('/custom-views/revenue-expense-trend', { params: year ? { year } : {} });
+export const getExpenseCategoryHeatmap = (year) =>
+  api.get('/custom-views/expense-category-heatmap', { params: year ? { year } : {} });
+export const downloadQuarterlyAnnualReportPdf = (payload) =>
+  api.post('/custom-views/quarterly-annual-report-pdf', payload, { responseType: 'blob' });
+export const listReportTemplates = () => api.get('/custom-views/report-templates');
+export const createReportTemplate = (data) => api.post('/custom-views/report-templates', data);
+export const updateReportTemplate = (id, data) => api.put(`/custom-views/report-templates/${id}`, data);
+export const deleteReportTemplate = (id) => api.delete(`/custom-views/report-templates/${id}`);
 
 export default api;

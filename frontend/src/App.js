@@ -43,7 +43,14 @@ import AiAuditAnalyzer from './pages/AiAuditAnalyzer';
 import AiBoardReports from './pages/AiBoardReports';
 import AiResponsesHistory from './pages/AiResponsesHistory';
 import AiExpenseCategorizer from './pages/AiExpenseCategorizer';
+import AiAuditReadiness from './pages/AiAuditReadiness';
+import AiCovenantTracking from './pages/AiCovenantTracking';
+import AiSegmentAnalysis from './pages/AiSegmentAnalysis';
+import AiBacklogTools from './pages/AiBacklogTools';
 import './App.css';
+
+import Batch03Features from './pages/Batch03Features';
+import CustomViewsPage from './pages/CustomViewsPage';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -84,6 +91,7 @@ function App() {
       <ToastProvider>
         <Router>
           <Routes>
+          <Route path="/batch03" element={<Batch03Features />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/register" element={<Register onLogin={handleLogin} />} />
             <Route path="/password-reset" element={<PasswordReset />} />
@@ -138,6 +146,11 @@ function App() {
                 <Route path="/ai-board-reports" element={<AiBoardReports />} />
                 <Route path="/ai-responses" element={<AiResponsesHistory />} />
                 <Route path="/ai-expense-categorizer" element={<AiExpenseCategorizer />} />
+                <Route path="/ai-audit-readiness" element={<AiAuditReadiness />} />
+                <Route path="/ai-covenant-tracking" element={<AiCovenantTracking />} />
+                <Route path="/ai-segment-analysis" element={<AiSegmentAnalysis />} />
+                <Route path="/ai-backlog-tools" element={<AiBacklogTools />} />
+                <Route path="/custom-views" element={<CustomViewsPage />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
               </Routes>
             </ErrorBoundary>

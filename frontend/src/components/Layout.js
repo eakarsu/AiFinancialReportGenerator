@@ -61,7 +61,13 @@ const navItems = [
     { path: '/ai-audit-analyzer', icon: Shield, label: 'Audit Analyzer' },
     { path: '/ai-board-reports', icon: ClipboardList, label: 'Board Reports' },
     { path: '/ai-expense-categorizer', icon: DollarSign, label: 'Expense Categorizer' },
+    { path: '/ai-audit-readiness', icon: Shield, label: 'Audit Readiness' },
+    { path: '/ai-covenant-tracking', icon: ClipboardList, label: 'Covenant Tracking' },
+    { path: '/ai-segment-analysis', icon: PieChart, label: 'Segment Analysis' },
     { path: '/ai-responses', icon: Brain, label: 'AI History' },
+  ]},
+  { section: 'Reports Views', items: [
+    { path: '/custom-views', icon: FileSpreadsheet, label: 'Reports Views' },
   ]},
 ];
 
@@ -84,7 +90,7 @@ const pageNames = {
   '/ai-presentations': 'AI Presentation Generator', '/ai-variance-explainer': 'AI Variance Explainer',
   '/ai-forecast-generator': 'AI Forecast Generator', '/ai-audit-analyzer': 'AI Audit Trail Analyzer',
   '/ai-board-reports': 'AI Board Report Writer', '/ai-responses': 'AI Response History',
-  '/ai-expense-categorizer': 'AI Expense Categorizer', '/register': 'Register',
+  '/ai-expense-categorizer': 'AI Expense Categorizer', '/custom-views': 'Reports Views', '/register': 'Register',
   '/password-reset': 'Password Reset',
 };
 

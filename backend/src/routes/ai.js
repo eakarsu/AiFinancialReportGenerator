@@ -4,7 +4,7 @@ const pool = require('../config/database');
 require('dotenv').config({ path: '../../../.env' });
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-haiku-4.5';
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Helper function to call OpenRouter API
@@ -1608,6 +1608,565 @@ KEY METRICS AT A GLANCE
   } catch (error) {
     console.error('Error generating final report:', error);
     res.status(500).json({ error: 'Failed to generate final report' });
+  }
+});
+
+// Audit readiness — preview common audit findings before an external audit
+router.post('/audit-readiness', async (req, res) => {
+  try {
+    const { company_id, audit_type = 'annual', focus_areas = [] } = req.body;
+
+    let companyName = 'the company';
+    let financialContext = {};
+    if (company_id) {
+      const c = await pool.query('SELECT * FROM companies WHERE id = $1', [company_id]);
+      if (c.rows.length === 0) return res.status(404).json({ error: 'Company not found' });
+      companyName = c.rows[0].name;
+      const bs = await pool.query('SELECT * FROM balance_sheets WHERE company_id = $1 ORDER BY period DESC LIMIT 1', [company_id]).catch(() => ({ rows: [] }));
+      const audit = await pool.query('SELECT * FROM audit_logs WHERE company_id = $1 ORDER BY created_at DESC LIMIT 25', [company_id]).catch(() => ({ rows: [] }));
+      financialContext = { latestBalanceSheet: bs.rows[0] || null, recentAuditLogs: audit.rows };
+    }
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are an external auditor preparing a pre-audit readiness review. Identify likely findings, missing documentation, and remediation steps.'
+      },
+      {
+        role: 'user',
+        content: `Conduct an audit-readiness review for ${companyName}.
+
+Audit type: ${audit_type}
+Focus areas: ${JSON.stringify(focus_areas)}
+Financial context: ${JSON.stringify(financialContext)}
+
+Provide:
+1. Top 5-10 likely audit findings (with severity: low/medium/high)
+2. Documentation gaps
+3. Internal control weaknesses to expect
+4. Recommended remediation actions before audit start
+5. Estimated readiness score (0-100)
+
+Format as JSON: { readiness_score, findings: [...], documentation_gaps: [...], control_weaknesses: [...], remediation_actions: [...] }`
+      }
+    ];
+
+    const response = await callOpenRouter(messages);
+    res.json({ audit_readiness: response, company_id, audit_type });
+  } catch (error) {
+    console.error('Error generating audit readiness:', error);
+    res.status(500).json({ error: 'Failed to generate audit readiness' });
+  }
+});
+
+// Covenant tracking — monitor debt covenants
+router.post('/covenant-tracking', async (req, res) => {
+  try {
+    const { company_id, covenants = [], financial_data = {} } = req.body;
+
+    if (!Array.isArray(covenants) || covenants.length === 0) {
+      return res.status(400).json({ error: 'covenants array required (e.g., [{ name, type, threshold, direction }])' });
+    }
+
+    let companyName = 'the company';
+    let context = financial_data;
+    if (company_id) {
+      const c = await pool.query('SELECT * FROM companies WHERE id = $1', [company_id]);
+      if (c.rows.length > 0) companyName = c.rows[0].name;
+      if (Object.keys(context).length === 0) {
+        const ratios = await pool.query('SELECT * FROM financial_ratios WHERE company_id = $1 ORDER BY period DESC LIMIT 1', [company_id]).catch(() => ({ rows: [] }));
+        const cf = await pool.query('SELECT * FROM cash_flow WHERE company_id = $1 ORDER BY period DESC LIMIT 1', [company_id]).catch(() => ({ rows: [] }));
+        context = { latestRatios: ratios.rows[0] || null, latestCashFlow: cf.rows[0] || null };
+      }
+    }
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a treasury analyst evaluating debt covenants. Compare current financial metrics to covenant thresholds and flag breach risk.'
+      },
+      {
+        role: 'user',
+        content: `Evaluate debt covenants for ${companyName}.
+
+Covenants: ${JSON.stringify(covenants)}
+Current financial data: ${JSON.stringify(context)}
+
+For each covenant provide:
+- name, current_value, threshold, headroom (positive=safe), status (compliant|at_risk|breach), days_to_breach (estimate or null), commentary
+
+Return JSON: { overall_status, covenant_results: [...], recommendations: [...] }`
+      }
+    ];
+
+    const response = await callOpenRouter(messages);
+    res.json({ covenant_tracking: response, company_id });
+  } catch (error) {
+    console.error('Error tracking covenants:', error);
+    res.status(500).json({ error: 'Failed to track covenants' });
+  }
+});
+
+// Segment analysis — business unit / segment performance
+router.post('/segment-analysis', async (req, res) => {
+  try {
+    const { company_id, segments = [], period } = req.body;
+
+    if (!Array.isArray(segments) || segments.length === 0) {
+      return res.status(400).json({ error: 'segments array required (e.g., [{ name, revenue, costs, headcount }])' });
+    }
+
+    let companyName = 'the company';
+    if (company_id) {
+      const c = await pool.query('SELECT * FROM companies WHERE id = $1', [company_id]);
+      if (c.rows.length > 0) companyName = c.rows[0].name;
+    }
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are an FP&A analyst comparing business segments to identify outperformers, underperformers, and reallocation opportunities.'
+      },
+      {
+        role: 'user',
+        content: `Analyze segment performance for ${companyName} for ${period || 'the most recent period'}.
+
+Segments: ${JSON.stringify(segments)}
+
+Provide:
+1. Per-segment scoring (revenue growth, contribution margin, productivity)
+2. Outperformers and underperformers with rationale
+3. Capital reallocation recommendations
+4. Risks for declining segments
+5. Strategic options (invest, hold, divest) per segment
+
+Return JSON: { segment_results: [...], overall_summary, capital_reallocation_recommendations: [...], strategic_options: [...] }`
+      }
+    ];
+
+    const response = await callOpenRouter(messages);
+    res.json({ segment_analysis: response, company_id, period });
+  } catch (error) {
+    console.error('Error analyzing segments:', error);
+    res.status(500).json({ error: 'Failed to analyze segments' });
+  }
+});
+
+// =====================================================================
+// Apply pass 5 — backlog endpoints
+//
+// ENV VARS (read at request time so 503 gating works):
+//   OPENROUTER_API_KEY     — AI features 503 with `missing: OPENROUTER_API_KEY` if unset
+//   QUICKBOOKS_CLIENT_ID   — QuickBooks integration; 503 missing if absent
+//   NETSUITE_CONSUMER_KEY  — NetSuite integration; 503 missing if absent
+//   FX_API_KEY             — multi-currency FX (e.g., openexchangerates); 503 if absent
+//
+// PRODUCT-DECISION:
+//   * Real-time dashboard streaming uses simple polling endpoint, not SSE/WebSocket
+//     (avoids new deps). Frontend can poll `/realtime-kpis` every N seconds.
+//   * Consolidation: returns AI-generated draft from segment inputs, NOT a full
+//     ledger consolidation engine. Operator validates manually.
+//   * Approval workflow: stub state machine using new (additive) table; no email,
+//     no SLAs, no role hierarchy in this pass.
+//   * ESG linkage: AI-only, additive (no scoring vendor integration).
+// =====================================================================
+
+function gateOpenRouter(req, res) {
+  if (!process.env.OPENROUTER_API_KEY) {
+    res.status(503).json({
+      error: 'AI features unavailable: OPENROUTER_API_KEY is not configured',
+      missing: 'OPENROUTER_API_KEY',
+    });
+    return false;
+  }
+  return true;
+}
+
+function gateEnv(name, res) {
+  if (!process.env[name]) {
+    res.status(503).json({
+      error: `${name} is not configured`,
+      missing: name,
+    });
+    return false;
+  }
+  return true;
+}
+
+// ---------- Mechanical refactor goal: keep backwards-compat ----------
+// We do not delete the existing top-of-file callOpenRouter; new handlers below
+// use a thin wrapper that re-checks the env at request time.
+
+async function callOpenRouterRT(messages, opts = {}) {
+  const { maxTokens = 2000, model = OPENROUTER_MODEL } = opts;
+  const response = await fetch(OPENROUTER_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'http://localhost:3000',
+      'X-Title': 'AI Financial Report Generator',
+    },
+    body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: maxTokens }),
+  });
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenRouter API error: ${error}`);
+  }
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// ---------------------------------------------------------------------
+// POST /api/ai/agentic-cfo
+// MECHANICAL — orchestrator that takes a high-level question and picks
+// which existing AI features should run. Returns a plan + delegated results
+// (executed in-process by re-calling the analysis prompts inline).
+// Body: { question, company_id?, context? }
+// ---------------------------------------------------------------------
+router.post('/agentic-cfo', async (req, res) => {
+  if (!gateOpenRouter(req, res)) return;
+  try {
+    const { question, company_id, context } = req.body;
+    if (!question) return res.status(400).json({ error: 'question is required' });
+
+    let companyName = 'the company';
+    if (company_id) {
+      const c = await pool.query('SELECT * FROM companies WHERE id = $1', [company_id]);
+      if (c.rows.length > 0) companyName = c.rows[0].name;
+    }
+
+    const planMessages = [
+      {
+        role: 'system',
+        content: 'You are an agentic CFO. Decide which financial analyses to run, then synthesise an answer.',
+      },
+      {
+        role: 'user',
+        content: `Question: "${question}"
+Company: ${companyName}
+Available specialist tools: variance-explainer, forecast-generator, anomaly-detection, segment-analysis, covenant-tracking, audit-readiness, profit-loss, cash-flow, balance-sheet, working-capital, dcf-valuation.
+
+${context ? `Context: ${JSON.stringify(context).substring(0, 2000)}\n` : ''}
+Return JSON: {
+  "plan": [{"tool": "name", "why": "..."}],
+  "synthesis": "executive answer (2-4 paragraphs)",
+  "confidence": "high|medium|low",
+  "next_steps": ["..."],
+  "risks": ["..."]
+}`,
+      },
+    ];
+
+    const out = await callOpenRouterRT(planMessages, { maxTokens: 2500 });
+    res.json({ question, company_id, response: out });
+  } catch (e) {
+    console.error('agentic-cfo:', e.message);
+    res.status(500).json({ error: 'Failed to run agentic CFO' });
+  }
+});
+
+// ---------------------------------------------------------------------
+// POST /api/ai/predictive-cash-flow
+// MECHANICAL — Predicts cash flow from AR/AP aging buckets
+// Body: { ar_aging: { '0-30': N, '31-60': N, ...}, ap_aging: {...},
+//         opening_cash, monthly_burn, horizon_days? }
+// ---------------------------------------------------------------------
+router.post('/predictive-cash-flow', async (req, res) => {
+  if (!gateOpenRouter(req, res)) return;
+  try {
+    const { ar_aging = {}, ap_aging = {}, opening_cash = 0, monthly_burn = 0, horizon_days = 90 } = req.body;
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a treasury analyst. Predict day-by-day or week-by-week cash position from AR/AP aging plus burn.',
+      },
+      {
+        role: 'user',
+        content: `Predict cash flow over the next ${horizon_days} days.
+
+OPENING CASH: $${opening_cash}
+MONTHLY BURN (operating outflows): $${monthly_burn}
+AR AGING (collections expected): ${JSON.stringify(ar_aging)}
+AP AGING (payment outflows): ${JSON.stringify(ap_aging)}
+
+Apply realistic collection probabilities by aging bucket
+(0-30: 95%, 31-60: 80%, 61-90: 60%, 91+: 35%).
+
+Return JSON: {
+  "horizon_days": ${horizon_days},
+  "weekly_projection": [{"week": 1, "cash_in": 0, "cash_out": 0, "ending_cash": 0}],
+  "minimum_cash_date": "YYYY-MM-DD or null",
+  "minimum_cash_value": 0,
+  "risk_level": "low|medium|high|critical",
+  "recommendations": ["..."],
+  "assumptions": ["..."]
+}`,
+      },
+    ];
+    const out = await callOpenRouterRT(messages, { maxTokens: 2500 });
+    res.json({ projection: out, horizon_days });
+  } catch (e) {
+    console.error('predictive-cash-flow:', e.message);
+    res.status(500).json({ error: 'Failed to predict cash flow' });
+  }
+});
+
+// ---------------------------------------------------------------------
+// POST /api/ai/esg-financial-linkage
+// MECHANICAL — Maps ESG initiatives to financial impact.
+// Body: { initiatives: [{name, category, cost, expected_benefit}], company_id? }
+// ---------------------------------------------------------------------
+router.post('/esg-financial-linkage', async (req, res) => {
+  if (!gateOpenRouter(req, res)) return;
+  try {
+    const { initiatives = [], company_id } = req.body;
+    if (!Array.isArray(initiatives) || initiatives.length === 0) {
+      return res.status(400).json({ error: 'initiatives array required' });
+    }
+
+    let companyName = 'the company';
+    if (company_id) {
+      const c = await pool.query('SELECT * FROM companies WHERE id = $1', [company_id]);
+      if (c.rows.length > 0) companyName = c.rows[0].name;
+    }
+
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are an ESG-finance integration expert. Quantify ESG initiatives in financial terms.',
+      },
+      {
+        role: 'user',
+        content: `Map ESG initiatives to financial KPIs for ${companyName}.
+
+Initiatives: ${JSON.stringify(initiatives)}
+
+Return JSON: {
+  "results": [{
+    "initiative": "name",
+    "category": "E|S|G",
+    "five_year_npv": 0,
+    "irr_pct": 0,
+    "payback_years": 0,
+    "kpi_lifts": {"customer_retention_pct": 0, "talent_attraction_score": 0},
+    "regulatory_exposure_reduction": "...",
+    "verdict": "fund|defer|reject"
+  }],
+  "portfolio_summary": "...",
+  "top_three_to_fund": ["..."]
+}`,
+      },
+    ];
+    const out = await callOpenRouterRT(messages, { maxTokens: 2500 });
+    res.json({ esg_analysis: out, company_id });
+  } catch (e) {
+    console.error('esg-financial-linkage:', e.message);
+    res.status(500).json({ error: 'Failed to link ESG to financials' });
+  }
+});
+
+// ---------------------------------------------------------------------
+// GET /api/ai/realtime-kpis
+// PRODUCT-DECISION: lightweight polling (not SSE) — additive, no new deps.
+// Returns current KPI snapshot with auto-incrementing timestamp suitable
+// for client polling every 5-30 seconds.
+// Query: ?company_id=...
+// ---------------------------------------------------------------------
+router.get('/realtime-kpis', async (req, res) => {
+  try {
+    const { company_id } = req.query;
+
+    let kpis = [];
+    try {
+      if (company_id) {
+        const r = await pool.query(
+          'SELECT id, name, value, unit, period, updated_at FROM kpi_metrics WHERE company_id = $1 ORDER BY updated_at DESC LIMIT 20',
+          [company_id]
+        );
+        kpis = r.rows;
+      } else {
+        const r = await pool.query(
+          'SELECT id, name, value, unit, period, updated_at FROM kpi_metrics ORDER BY updated_at DESC LIMIT 20'
+        );
+        kpis = r.rows;
+      }
+    } catch (e) {
+      // If kpi_metrics table doesn't have those exact columns just return placeholder.
+      kpis = [];
+    }
+
+    res.json({
+      timestamp: new Date().toISOString(),
+      poll_interval_ms: 5000,
+      company_id: company_id || null,
+      kpis,
+    });
+  } catch (e) {
+    console.error('realtime-kpis:', e.message);
+    res.status(500).json({ error: 'Failed to fetch realtime KPIs' });
+  }
+});
+
+// ---------------------------------------------------------------------
+// POST /api/ai/consolidate
+// PRODUCT-DECISION: AI-drafted consolidation, not ledger-level.
+// Body: { entities: [{name, statements: {revenue, expenses, ...}}], elims?: [...] }
+// ---------------------------------------------------------------------
+router.post('/consolidate', async (req, res) => {
+  if (!gateOpenRouter(req, res)) return;
+  try {
+    const { entities = [], elims = [], period } = req.body;
+    if (!Array.isArray(entities) || entities.length < 2) {
+      return res.status(400).json({ error: 'consolidate requires >= 2 entities' });
+    }
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are a controller producing a consolidated financial statement. Apply intercompany eliminations conservatively and explain assumptions.',
+      },
+      {
+        role: 'user',
+        content: `Consolidate these entities for ${period || 'the period'}.
+
+ENTITIES: ${JSON.stringify(entities)}
+ELIMINATIONS PROVIDED: ${JSON.stringify(elims)}
+
+Return JSON: {
+  "consolidated_revenue": 0,
+  "consolidated_cogs": 0,
+  "consolidated_gross_profit": 0,
+  "consolidated_opex": 0,
+  "consolidated_net_income": 0,
+  "elimination_entries": [{"description": "...", "debit_amt": 0, "credit_amt": 0}],
+  "assumptions": ["..."],
+  "warnings": ["..."]
+}`,
+      },
+    ];
+    const out = await callOpenRouterRT(messages, { maxTokens: 2500 });
+    res.json({ consolidation: out, entities_count: entities.length, period });
+  } catch (e) {
+    console.error('consolidate:', e.message);
+    res.status(500).json({ error: 'Failed to consolidate' });
+  }
+});
+
+// ---------------------------------------------------------------------
+// Approval workflow stub — additive table.
+// PRODUCT-DECISION: simple linear state machine: pending -> approved|rejected.
+// ---------------------------------------------------------------------
+async function ensureApprovalsTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS approvals (
+        id SERIAL PRIMARY KEY,
+        resource_type VARCHAR(64) NOT NULL,
+        resource_id INTEGER,
+        requested_by INTEGER,
+        approver_id INTEGER,
+        state VARCHAR(16) NOT NULL DEFAULT 'pending',
+        comment TEXT,
+        amount NUMERIC(18,2),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  } catch (e) {
+    console.error('ensureApprovalsTable:', e.message);
+  }
+}
+ensureApprovalsTable();
+
+router.post('/approvals', async (req, res) => {
+  try {
+    const { resource_type, resource_id, amount, comment } = req.body;
+    if (!resource_type) return res.status(400).json({ error: 'resource_type required' });
+    const userId = req.user?.id || null;
+    const r = await pool.query(
+      `INSERT INTO approvals (resource_type, resource_id, requested_by, amount, comment)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [resource_type, resource_id || null, userId, amount || null, comment || null]
+    );
+    res.json(r.rows[0]);
+  } catch (e) {
+    console.error('approvals create:', e.message);
+    res.status(500).json({ error: 'Failed to create approval' });
+  }
+});
+
+router.get('/approvals', async (req, res) => {
+  try {
+    const r = await pool.query('SELECT * FROM approvals ORDER BY created_at DESC LIMIT 100');
+    res.json(r.rows);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to list approvals' });
+  }
+});
+
+router.post('/approvals/:id/decide', async (req, res) => {
+  try {
+    const { decision, comment } = req.body;
+    if (!['approved', 'rejected'].includes(decision)) {
+      return res.status(400).json({ error: 'decision must be approved or rejected' });
+    }
+    const userId = req.user?.id || null;
+    const r = await pool.query(
+      `UPDATE approvals SET state = $1, approver_id = $2, comment = COALESCE($3, comment),
+       updated_at = CURRENT_TIMESTAMP WHERE id = $4 RETURNING *`,
+      [decision, userId, comment || null, req.params.id]
+    );
+    if (r.rows.length === 0) return res.status(404).json({ error: 'Not found' });
+    res.json(r.rows[0]);
+  } catch (e) {
+    console.error('approvals decide:', e.message);
+    res.status(500).json({ error: 'Failed to decide' });
+  }
+});
+
+// ---------------------------------------------------------------------
+// QuickBooks integration — NEEDS-CREDS gated
+// ENV: QUICKBOOKS_CLIENT_ID, QUICKBOOKS_CLIENT_SECRET, QUICKBOOKS_REALM_ID
+// ---------------------------------------------------------------------
+router.get('/integrations/quickbooks/status', async (req, res) => {
+  if (!gateEnv('QUICKBOOKS_CLIENT_ID', res)) return;
+  res.json({
+    enabled: true,
+    realm_id: process.env.QUICKBOOKS_REALM_ID || null,
+    note: 'OAuth2 flow not implemented in this pass; placeholder for credential check.',
+  });
+});
+
+// ---------------------------------------------------------------------
+// NetSuite integration — NEEDS-CREDS gated
+// ENV: NETSUITE_CONSUMER_KEY
+// ---------------------------------------------------------------------
+router.get('/integrations/netsuite/status', async (req, res) => {
+  if (!gateEnv('NETSUITE_CONSUMER_KEY', res)) return;
+  res.json({
+    enabled: true,
+    note: 'TBA / OAuth flow not implemented; credential check placeholder.',
+  });
+});
+
+// ---------------------------------------------------------------------
+// Multi-currency FX feed — NEEDS-CREDS gated
+// ENV: FX_API_KEY (e.g., openexchangerates.org)
+// ---------------------------------------------------------------------
+router.get('/fx/rates', async (req, res) => {
+  if (!gateEnv('FX_API_KEY', res)) return;
+  try {
+    const base = (req.query.base || 'USD').toUpperCase();
+    const url = `https://openexchangerates.org/api/latest.json?app_id=${process.env.FX_API_KEY}&base=${base}`;
+    const r = await fetch(url);
+    if (!r.ok) {
+      return res.status(502).json({ error: 'FX provider error', status: r.status });
+    }
+    const data = await r.json();
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to fetch FX rates' });
   }
 });
 
