@@ -158,6 +158,18 @@ app.use('/api/fpa', protect, require('./routes/fpaModule'));
 app.use('/api/consolidation', protect, require('./routes/consolidation'));
 app.use('/api/esg-integration', protect, require('./routes/esgIntegration'));
 
+// Custom Views (VIZ + NON-VIZ) - mounted BEFORE 404 handler
+try {
+  app.use('/api/custom-views', require('../routes/customViews'));
+} catch (e) {
+  console.warn('custom-views router failed to mount:', e.message);
+}
+
+// 404 handler for unknown /api routes (must run AFTER custom-views)
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.originalUrl });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

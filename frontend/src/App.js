@@ -50,6 +50,7 @@ import AiBacklogTools from './pages/AiBacklogTools';
 import './App.css';
 
 import Batch03Features from './pages/Batch03Features';
+import CustomViewsPage from './pages/CustomViewsPage';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -149,6 +150,7 @@ function App() {
                 <Route path="/ai-covenant-tracking" element={<AiCovenantTracking />} />
                 <Route path="/ai-segment-analysis" element={<AiSegmentAnalysis />} />
                 <Route path="/ai-backlog-tools" element={<AiBacklogTools />} />
+                <Route path="/custom-views" element={<CustomViewsPage />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
               </Routes>
             </ErrorBoundary>

@@ -358,4 +358,16 @@ export const aiQuickBooksStatus = () => api.get('/ai/integrations/quickbooks/sta
 export const aiNetSuiteStatus = () => api.get('/ai/integrations/netsuite/status');
 export const aiFXRates = (base) => api.get('/ai/fx/rates', { params: base ? { base } : {} });
 
+// --- Custom Views API ---
+export const getRevenueExpenseTrend = (year) =>
+  api.get('/custom-views/revenue-expense-trend', { params: year ? { year } : {} });
+export const getExpenseCategoryHeatmap = (year) =>
+  api.get('/custom-views/expense-category-heatmap', { params: year ? { year } : {} });
+export const downloadQuarterlyAnnualReportPdf = (payload) =>
+  api.post('/custom-views/quarterly-annual-report-pdf', payload, { responseType: 'blob' });
+export const listReportTemplates = () => api.get('/custom-views/report-templates');
+export const createReportTemplate = (data) => api.post('/custom-views/report-templates', data);
+export const updateReportTemplate = (id, data) => api.put(`/custom-views/report-templates/${id}`, data);
+export const deleteReportTemplate = (id) => api.delete(`/custom-views/report-templates/${id}`);
+
 export default api;
