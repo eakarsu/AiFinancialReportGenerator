@@ -47,10 +47,14 @@ import AiAuditReadiness from './pages/AiAuditReadiness';
 import AiCovenantTracking from './pages/AiCovenantTracking';
 import AiSegmentAnalysis from './pages/AiSegmentAnalysis';
 import AiBacklogTools from './pages/AiBacklogTools';
+import RevenueRecognitionDrift from './pages/RevenueRecognitionDrift';
 import './App.css';
 
 import Batch03Features from './pages/Batch03Features';
 import CustomViewsPage from './pages/CustomViewsPage';
+
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -91,6 +95,9 @@ function App() {
       <ToastProvider>
         <Router>
           <Routes>
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
           <Route path="/batch03" element={<Batch03Features />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/register" element={<Register onLogin={handleLogin} />} />
@@ -150,6 +157,7 @@ function App() {
                 <Route path="/ai-covenant-tracking" element={<AiCovenantTracking />} />
                 <Route path="/ai-segment-analysis" element={<AiSegmentAnalysis />} />
                 <Route path="/ai-backlog-tools" element={<AiBacklogTools />} />
+                <Route path="/revenue-recognition-drift" element={<RevenueRecognitionDrift />} />
                 <Route path="/custom-views" element={<CustomViewsPage />} />
                 <Route path="/login" element={<Navigate to="/" replace />} />
               </Routes>

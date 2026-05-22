@@ -18,6 +18,7 @@ const navItems = [
     { path: '/profit-loss', icon: BarChart3, label: 'Profit & Loss' },
     { path: '/balance-sheets', icon: Scale, label: 'Balance Sheets' },
     { path: '/cash-flow', icon: ArrowRightLeft, label: 'Cash Flow' },
+    { path: '/revenue-recognition-drift', icon: AlertTriangle, label: 'Revenue Drift' },
   ]},
   { section: 'Forecasting & Analysis', items: [
     { path: '/revenue-forecasts', icon: TrendingUp, label: 'Revenue Forecasts' },
@@ -75,6 +76,7 @@ const pageNames = {
   '/': 'Dashboard', '/ai-chat': 'AI Assistant',
   '/financial-statements': 'Financial Statements', '/revenue-forecasts': 'Revenue Forecasts',
   '/expense-records': 'Expense Records', '/cash-flow': 'Cash Flow',
+  '/revenue-recognition-drift': 'Revenue Recognition Drift',
   '/budget-actuals': 'Budget vs Actuals', '/profit-loss': 'Profit & Loss',
   '/balance-sheets': 'Balance Sheets', '/kpi-metrics': 'KPI Metrics',
   '/audit-logs': 'Audit Logs', '/custom-reports': 'Custom Reports',

@@ -41,10 +41,23 @@ async function authMiddleware(req, res, next) {
       return res.status(401).json({ error: 'Invalid or expired token.' });
     }
 
+    // Demo login bypass — matches /auth/login demo short-circuit (non-UUID id)
+    const principalId = payload.sub || payload.id;
+    if (principalId === 'demo-user') {
+      req.user = {
+        id: 'demo-user',
+        name: 'Demo CFO',
+        email: 'demo@financialreports.ai',
+        role: 'CFO',
+        company_id: null,
+      };
+      return next();
+    }
+
     // Validate user exists & load fresh
     const result = await pool.query(
       'SELECT id, name, email, role, company_id FROM users WHERE id = $1',
-      [payload.sub || payload.id]
+      [principalId]
     );
     if (result.rows.length === 0) {
       return res.status(403).json({ error: 'User no longer exists.' });

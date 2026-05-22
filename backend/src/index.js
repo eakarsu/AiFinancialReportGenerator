@@ -157,6 +157,7 @@ app.use('/api/audit-support', protect, require('./routes/auditSupport'));
 app.use('/api/fpa', protect, require('./routes/fpaModule'));
 app.use('/api/consolidation', protect, require('./routes/consolidation'));
 app.use('/api/esg-integration', protect, require('./routes/esgIntegration'));
+app.use('/api/revenue-recognition-drift', protect, require('./routes/revenueRecognitionDrift'));
 
 // Custom Views (VIZ + NON-VIZ) - mounted BEFORE 404 handler
 try {
