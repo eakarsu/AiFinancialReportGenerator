@@ -14,7 +14,8 @@
     "start:frontend": "cd frontend && PORT=3000 npm start",
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "dev": "concurrently \"npm run dev:backend\" \"npm run start:frontend\"",
-    "seed": "cd backend && npm run seed"
+    "seed": "cd backend && npm run seed",
+    "create-admin": "npm run create-admin --workspace backend"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

@@ -1,0 +1,30 @@
+module.exports={
+  caseType:'approved_financial_report_release',initialState:'source_registered',
+  states:['source_registered','ledger_reconciled','period_locked','controls_verified','report_drafted','variance_review','accountant_review','finance_approval','release_approved','export_observed','export_failed','correction','superseded','outcome_reconciled','closed'],
+  createRoles:['financial_analyst','controller'],assessmentRoles:['financial_analyst','accountant','controller','finance_approver'],auditRoles:['controller','privacy_officer','auditor'],connectorRoles:['integration_operator','controller'],
+  evidenceKinds:['source_manifest','ledger_snapshot','chart_of_accounts_version','period_lock_receipt','fx_rate_snapshot','control_attestation','report_artifact','formula_validation','variance_analysis','citation_manifest','accountant_review','finance_approval','release_receipt','export_receipt','failure_record','correction_record','supersession_record'],
+  requiredSignals:['ledgerVersion','chartOfAccountsVersion','periodVersion','fxVersion','policyVersion','reconciliationDifference','controlExceptionCount','sourceFreshnessHours','materialityVariance','formulaErrorCount','citationCoverage','p95LatencyMs','reviewStatus'],
+  professionalBoundary:'Reports are non-advisory drafts until independently reviewed by qualified finance personnel. The API never files with regulators, moves funds, changes ledgers, gives investment or tax advice, or releases a report without dual human approval.',
+  connectors:[{name:'general_ledger',purpose:'versioned ledger extracts and reconciliation receipts'},{name:'erp',purpose:'authoritative entity and period records'},{name:'banking_readonly',purpose:'read-only statement evidence'},{name:'tax',purpose:'versioned tax-source evidence, never filing'},{name:'consolidation',purpose:'entity elimination and FX evidence'},{name:'document_store',purpose:'immutable report artifacts'},{name:'esignature',purpose:'reviewer approval receipts'},{name:'report_delivery',purpose:'approved release and export receipts'},{name:'audit_registry',purpose:'control and supersession history'}],
+  transitions:[
+    {from:'source_registered',action:'reconcile_ledger',to:'ledger_reconciled',roles:['financial_analyst','accountant'],requiresEvidence:true},
+    {from:'ledger_reconciled',action:'lock_period',to:'period_locked',roles:['controller'],requiresEvidence:true,dualControl:true},
+    {from:'period_locked',action:'verify_controls',to:'controls_verified',roles:['accountant','controller'],requiresEvidence:true},
+    {from:'controls_verified',action:'record_draft',to:'report_drafted',roles:['financial_analyst'],requiresEvidence:true},
+    {from:'report_drafted',action:'submit_variance_review',to:'variance_review',roles:['financial_analyst','accountant'],requiresEvidence:true},
+    {from:'variance_review',action:'submit_accountant_review',to:'accountant_review',roles:['accountant'],requiresEvidence:true,dualControl:true},
+    {from:'accountant_review',action:'submit_finance_approval',to:'finance_approval',roles:['controller','finance_approver'],requiresEvidence:true,dualControl:true},
+    {from:'finance_approval',action:'approve_release_observation',to:'release_approved',roles:['finance_approver','controller'],requiresEvidence:true,dualControl:true},
+    {from:'release_approved',action:'record_export_receipt',to:'export_observed',roles:['integration_operator','controller'],requiresEvidence:true},
+    {from:'release_approved',action:'record_export_failure',to:'export_failed',roles:['integration_operator','controller'],requiresEvidence:true},
+    {from:'export_failed',action:'request_correction',to:'correction',roles:['financial_analyst','controller'],requiresEvidence:true},
+    {from:'correction',action:'supersede_report',to:'superseded',roles:['controller','finance_approver'],requiresEvidence:true,dualControl:true},
+    {from:'export_observed',action:'reconcile_outcome',to:'outcome_reconciled',roles:['accountant','controller'],requiresEvidence:true,dualControl:true},
+    {from:'superseded',action:'reconcile_outcome',to:'outcome_reconciled',roles:['accountant','controller'],requiresEvidence:true,dualControl:true},
+    {from:'outcome_reconciled',action:'close_report',to:'closed',roles:['controller','auditor'],requiresEvidence:true}
+  ],
+  acceptedFixture:{ledgerVersion:'l1',chartOfAccountsVersion:'coa1',periodVersion:'fy26q2',fxVersion:'fx1',policyVersion:'p1',reconciliationDifference:0,controlExceptionCount:0,sourceFreshnessHours:2,materialityVariance:0.001,formulaErrorCount:0,citationCoverage:1,p95LatencyMs:800,reviewStatus:'ready'},
+  rejectedFixture:{ledgerVersion:'l1',chartOfAccountsVersion:'coa1',periodVersion:'fy26q2',fxVersion:'fx1',policyVersion:'p1',reconciliationDifference:1,controlExceptionCount:0,sourceFreshnessHours:2,materialityVariance:0.001,formulaErrorCount:0,citationCoverage:1,p95LatencyMs:800,reviewStatus:'ready'},
+  readyDisposition:'qualified_accountant_review_required',holdDisposition:'financial_control_or_reconciliation_hold',decisionField:'reportReleaseCommand',
+  assess:x=>{const difference=Number(x.reconciliationDifference),exceptions=Number(x.controlExceptionCount),freshness=Number(x.sourceFreshnessHours),variance=Number(x.materialityVariance),formulaErrors=Number(x.formulaErrorCount),coverage=Number(x.citationCoverage),latency=Number(x.p95LatencyMs);const ready=difference===0&&exceptions===0&&freshness<=24&&variance<=0.01&&formulaErrors===0&&coverage>=0.98&&latency<=1500&&x.reviewStatus==='ready';return{disposition:ready?'qualified_accountant_review_required':'financial_control_or_reconciliation_hold',reportReleaseCommand:null,filingCommand:null,paymentCommand:null,investmentRecommendation:null,metrics:{difference,exceptions,freshness,variance,formulaErrors,coverage,latency},versions:{ledger:x.ledgerVersion,chartOfAccounts:x.chartOfAccountsVersion,period:x.periodVersion,fx:x.fxVersion,policy:x.policyVersion}};}
+};
