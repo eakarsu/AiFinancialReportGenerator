@@ -11,8 +11,8 @@ function Login({ onLogin }) {
   const navigate = useNavigate();
 
   const handleDemoLogin = () => {
-    setEmail('demo@financialreports.ai');
-    setPassword('demo123456');
+    setEmail(process.env.REACT_APP_DEMO_EMAIL || '');
+    setPassword(process.env.REACT_APP_DEMO_PASSWORD || '');
     setError('');
   };
 
