@@ -18,6 +18,7 @@ app.use(createProviderGate(['/api/ai','/api/gap','/api/generated','/api/batch','
 app.get('/api/health',(_req,res)=>res.json({status:'ok',workflow:'approved_financial_report_release',nonAdvisory:true,timestamp:new Date().toISOString()}));
 app.use('/api/auth',require('../governance/identityRouter'));
 app.use('/api/governance',governanceRouter);
+app.use('/api/governed-ai',require('../governance/aiRouter'));
 app.use((_req,res)=>res.status(404).json({error:'ROUTE_NOT_SUPPORTED'}));
 app.use((error,_req,res,_next)=>{console.error('Request failed:',error.message);res.status(500).json({error:'INTERNAL_SERVER_ERROR'});});
 app.listen(port,()=>console.log(`Governed financial-report API listening on ${port}`));
