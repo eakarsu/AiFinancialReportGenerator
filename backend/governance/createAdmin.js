@@ -9,19 +9,15 @@ async function main() {
     throw new Error('BOOTSTRAP_ADMIN_EMAIL and a BOOTSTRAP_ADMIN_PASSWORD of at least 12 characters are required');
   }
 
-  const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-  if (existing.rows[0]) {
-    console.log('bootstrap administrator already exists; no credentials or roles changed');
-    return;
-  }
-
   const passwordHash = await bcrypt.hash(password, 12);
   await pool.query(
     `INSERT INTO users (id, email, name, password_hash, role)
-     VALUES ($1, $2, $3, $4, 'admin')`,
+     VALUES ($1, $2, $3, $4, 'admin')
+     ON CONFLICT(email) DO UPDATE SET name=EXCLUDED.name,
+       password_hash=EXCLUDED.password_hash,role=EXCLUDED.role`,
     [crypto.randomUUID(), email, 'Runtime Administrator', passwordHash],
   );
-  console.log('bootstrap administrator created');
+  console.log('bootstrap administrator created or refreshed');
 }
 
 main().catch((error) => {

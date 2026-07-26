@@ -60,6 +60,7 @@ require_package(){ (cd "$1" && node -e "try { require.resolve('$2'); } catch { r
 port_free(){ if command -v lsof >/dev/null 2>&1 && lsof -ti ":$1" >/dev/null 2>&1; then echo "Port $1 is already in use; refusing to terminate another process." >&2; exit 1; fi; }
 cleanup(){ for pid in "${CHILD_PIDS[@]:-}"; do [ -n "$pid" ] && kill "$pid" 2>/dev/null || true; done; }; trap cleanup INT TERM EXIT
 require_file "$PROJECT_DIR/.env"; require_package "$PROJECT_DIR/backend" pg; require_package "$PROJECT_DIR/frontend" react-scripts; port_free "$BACKEND_PORT"; port_free "$FRONTEND_PORT"
+if [ "${NODE_ENV:-development}" != production ] && [ "${ENABLE_DEMO_CREDENTIAL_AUTOFILL:-true}" = true ]; then BOOTSTRAP_ADMIN_EMAIL="$PROVISION_ADMIN_EMAIL" BOOTSTRAP_ADMIN_PASSWORD="$PROVISION_ADMIN_PASSWORD" node "$PROJECT_DIR/backend/governance/createAdmin.js"; fi
 (cd "$PROJECT_DIR/backend" && exec env BACKEND_PORT="$BACKEND_PORT" npm start) & CHILD_PIDS+=("$!")
 for attempt in {1..120}; do curl -fsS "http://127.0.0.1:$BACKEND_PORT/api/health" >/dev/null 2>&1 && break; kill -0 "${CHILD_PIDS[0]}" 2>/dev/null || { echo "Backend exited before becoming ready" >&2; exit 1; }; sleep 0.25; done
 curl -fsS "http://127.0.0.1:$BACKEND_PORT/api/health" >/dev/null 2>&1 || { echo "Backend did not become ready" >&2; exit 1; }
