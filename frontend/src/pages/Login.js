@@ -118,11 +118,11 @@ function Login({ onLogin }) {
             padding: '14px 24px', fontSize: '16px', fontWeight: '600', borderRadius: '10px',
             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none', cursor: 'pointer',
           }}>
-            <Sparkles size={18} /> Try Demo Account
+            <Sparkles size={18} /> Auto Fill Demo Credentials
           </button>
 
           <p style={{ textAlign: 'center', color: '#64748b', fontSize: '13px', margin: 0 }}>
-            Click "Try Demo Account" to auto-fill demo credentials
+            Click "Auto Fill Demo Credentials" to auto-fill demo credentials
           </p>
 
           <p style={{ textAlign: 'center', color: '#64748b', fontSize: '14px', margin: '4px 0 0' }}>
