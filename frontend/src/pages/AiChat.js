@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Brain, User, Send } from 'lucide-react';
 import { chatWithAi } from '../services/api';
+import FormattedAIReport from '../components/FormattedAIReport';
 
 function AiChat() {
   const [messages, setMessages] = useState([
@@ -71,7 +72,9 @@ function AiChat() {
               {message.role === 'ai' ? <Brain size={18} /> : <User size={18} />}
             </div>
             <div className={`chat-bubble ${message.role}`}>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>
+              {message.role === 'ai' && (typeof message.content === 'object' || /^[\s]*[\[{]/.test(String(message.content)))
+                ? <FormattedAIReport response={message.content} title="AI assistant response" />
+                : <div style={{ whiteSpace: 'pre-wrap' }}>{message.content}</div>}
             </div>
           </div>
         ))}

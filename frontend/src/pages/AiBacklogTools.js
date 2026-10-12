@@ -1,3 +1,6 @@
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
+import FormattedAIReport from '../components/FormattedAIReport';
 import React, { useState, useEffect } from 'react';
 import {
   aiAgenticCFO, aiPredictiveCashFlow, aiESGFinancialLinkage,
@@ -17,7 +20,7 @@ const TABS = [
 
 function Pre({ data }) {
   if (data === null || data === undefined) return null;
-  return <pre style={{ background: '#0f172a', color: '#a7f3d0', padding: 14, borderRadius: 8, overflow: 'auto', fontSize: 12 }}>{typeof data === 'string' ? data : JSON.stringify(data, null, 2)}</pre>;
+  return <FormattedAIReport response={data} title="AI result" />;
 }
 
 function Err({ msg }) {
@@ -31,6 +34,8 @@ function ErrPayload({ payload }) {
 }
 
 function CFOPanel() {
+  const fullAIExamples = useFullAIExamples();
+
   const [q, setQ] = useState('Should we invest in expanding our European software segment vs. paying down debt?');
   const [companyId, setCompanyId] = useState('');
   const [out, setOut] = useState(null);
@@ -49,10 +54,10 @@ function CFOPanel() {
     setLoading(false);
   };
   return (
-    <div className="card" style={{ padding: 24 }}>
+    <div className="card" style={{ padding: 24 }} data-full-ai-workspace="CFOPanel"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <h3>Agentic CFO</h3>
-      <div className="form-group"><label>Question</label><textarea rows={3} value={q} onChange={(e) => setQ(e.target.value)} /></div>
-      <div className="form-group"><label>Company ID (optional)</label><input value={companyId} onChange={(e) => setCompanyId(e.target.value)} /></div>
+      <div className="form-group"><label>Question</label><textarea rows={3} value={q} onChange={(e) => setQ(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: q, change: (e) => setQ(e.target.value), label: "q", manual: false, json: false, sample: 'Should we invest in expanding our European software segment vs. paying down debt?' }, "p1-1978", undefined)} /></div>
+      <div className="form-group"><label>Company ID (optional)</label><input value={companyId} onChange={(e) => setCompanyId(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: companyId, change: (e) => setCompanyId(e.target.value), label: "companyId", manual: false, json: false, sample: '' }, "p1-2125", undefined)} /></div>
       <button onClick={run} disabled={loading} className="btn-primary">{loading ? 'Running...' : 'Run'}</button>
       <Err msg={err} />
       <ErrPayload payload={errPayload} />
@@ -62,6 +67,8 @@ function CFOPanel() {
 }
 
 function CashPanel() {
+  const fullAIExamples = useFullAIExamples();
+
   const [body, setBody] = useState({ opening_cash: 250000, monthly_burn: 80000, horizon_days: 90, ar_aging: { '0-30': 50000, '31-60': 30000, '61-90': 10000 }, ap_aging: { '0-30': 25000, '31-60': 15000 } });
   const [text, setText] = useState(JSON.stringify(body, null, 2));
   const [out, setOut] = useState(null); const [err, setErr] = useState(null); const [errPayload, setErrPayload] = useState(null); const [loading, setLoading] = useState(false);
@@ -78,9 +85,9 @@ function CashPanel() {
     setLoading(false);
   };
   return (
-    <div className="card" style={{ padding: 24 }}>
+    <div className="card" style={{ padding: 24 }} data-full-ai-workspace="CashPanel"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <h3>Predictive Cash Flow</h3>
-      <div className="form-group"><label>Body (JSON)</label><textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} /></div>
+      <div className="form-group"><label>Body (JSON)</label><textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: JSON.stringify(body, null, 2) }, "p1-3434", undefined)} /></div>
       <button onClick={run} disabled={loading} className="btn-primary">{loading ? 'Predicting...' : 'Predict'}</button>
       <Err msg={err} />
       <ErrPayload payload={errPayload} />
@@ -90,6 +97,8 @@ function CashPanel() {
 }
 
 function ESGPanel() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState(JSON.stringify({ initiatives: [
     { name: 'Solar rooftop', category: 'E', cost: 500000, expected_benefit: 'reduce energy 30%' },
     { name: 'Apprenticeship program', category: 'S', cost: 120000, expected_benefit: 'workforce pipeline' },
@@ -104,9 +113,12 @@ function ESGPanel() {
     setLoading(false);
   };
   return (
-    <div className="card" style={{ padding: 24 }}>
+    <div className="card" style={{ padding: 24 }} data-full-ai-workspace="ESGPanel"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <h3>ESG Financial Linkage</h3>
-      <div className="form-group"><label>Body (JSON)</label><textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} /></div>
+      <div className="form-group"><label>Body (JSON)</label><textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: JSON.stringify({ initiatives: [
+    { name: 'Solar rooftop', category: 'E', cost: 500000, expected_benefit: 'reduce energy 30%' },
+    { name: 'Apprenticeship program', category: 'S', cost: 120000, expected_benefit: 'workforce pipeline' },
+  ] }, null, 2) }, "p1-4728", undefined)} /></div>
       <button onClick={run} disabled={loading} className="btn-primary">{loading ? 'Analyzing...' : 'Analyze'}</button>
       <Err msg={err} />
       <ErrPayload payload={errPayload} />
@@ -116,6 +128,8 @@ function ESGPanel() {
 }
 
 function KPIPanel() {
+  const fullAIExamples = useFullAIExamples();
+
   const [companyId, setCompanyId] = useState('');
   const [out, setOut] = useState(null); const [err, setErr] = useState(null);
   const [polling, setPolling] = useState(false);
@@ -135,9 +149,9 @@ function KPIPanel() {
   }, [polling, companyId]);
 
   return (
-    <div className="card" style={{ padding: 24 }}>
+    <div className="card" style={{ padding: 24 }} data-full-ai-workspace="KPIPanel"><FullAIExamples controller={fullAIExamples} />
       <h3>Real-time KPIs (polling 5s)</h3>
-      <div className="form-group"><label>Company ID (optional)</label><input value={companyId} onChange={(e) => setCompanyId(e.target.value)} /></div>
+      <div className="form-group"><label>Company ID (optional)</label><input value={companyId} onChange={(e) => setCompanyId(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: companyId, change: (e) => setCompanyId(e.target.value), label: "companyId", manual: false, json: false, sample: '' }, "p1-5805", undefined)} /></div>
       <button onClick={() => setPolling((p) => !p)} className="btn-primary">{polling ? 'Stop' : 'Start polling'}</button>
       <Err msg={err} />
       <Pre data={out} />
@@ -146,6 +160,8 @@ function KPIPanel() {
 }
 
 function ConsolPanel() {
+  const fullAIExamples = useFullAIExamples();
+
   const [text, setText] = useState(JSON.stringify({ entities: [
     { name: 'Parent Co', statements: { revenue: 5000000, expenses: 3500000 } },
     { name: 'Sub A', statements: { revenue: 2000000, expenses: 1700000 } },
@@ -158,9 +174,12 @@ function ConsolPanel() {
     setLoading(false);
   };
   return (
-    <div className="card" style={{ padding: 24 }}>
+    <div className="card" style={{ padding: 24 }} data-full-ai-workspace="ConsolPanel"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading)} />
       <h3>Consolidate Entities</h3>
-      <div className="form-group"><label>Body (JSON)</label><textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} /></div>
+      <div className="form-group"><label>Body (JSON)</label><textarea rows={10} value={text} onChange={(e) => setText(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: text, change: (e) => setText(e.target.value), label: "text", manual: false, json: false, sample: JSON.stringify({ entities: [
+    { name: 'Parent Co', statements: { revenue: 5000000, expenses: 3500000 } },
+    { name: 'Sub A', statements: { revenue: 2000000, expenses: 1700000 } },
+  ], elims: [] , period: 'FY2025' }, null, 2) }, "p1-7013", undefined)} /></div>
       <button onClick={run} disabled={loading} className="btn-primary">{loading ? 'Consolidating...' : 'Consolidate'}</button>
       <Err msg={err} />
       <ErrPayload payload={errPayload} />
@@ -170,6 +189,8 @@ function ConsolPanel() {
 }
 
 function ApprovePanel() {
+  const fullAIExamples = useFullAIExamples();
+
   const [list, setList] = useState([]);
   const [resourceType, setResourceType] = useState('expense');
   const [amount, setAmount] = useState('1500');
@@ -189,12 +210,12 @@ function ApprovePanel() {
     catch (e) { setErr(e.response?.data?.error || e.message); }
   };
   return (
-    <div className="card" style={{ padding: 24 }}>
+    <div className="card" style={{ padding: 24 }} data-full-ai-workspace="ApprovePanel"><FullAIExamples controller={fullAIExamples} />
       <h3>Approval Workflow</h3>
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 12 }}>
-        <div className="form-group" style={{ flex: 1 }}><label>Resource Type</label><input value={resourceType} onChange={(e) => setResourceType(e.target.value)} /></div>
-        <div className="form-group" style={{ flex: 1 }}><label>Amount</label><input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
-        <div className="form-group" style={{ flex: 2 }}><label>Comment</label><input value={comment} onChange={(e) => setComment(e.target.value)} /></div>
+        <div className="form-group" style={{ flex: 1 }}><label>Resource Type</label><input value={resourceType} onChange={(e) => setResourceType(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: resourceType, change: (e) => setResourceType(e.target.value), label: "resourceType", manual: false, json: false, sample: 'expense' }, "p1-8511", undefined)} /></div>
+        <div className="form-group" style={{ flex: 1 }}><label>Amount</label><input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: amount, change: (e) => setAmount(e.target.value), label: "amount", manual: false, json: false, sample: '1500' }, "p1-8675", undefined)} /></div>
+        <div className="form-group" style={{ flex: 2 }}><label>Comment</label><input value={comment} onChange={(e) => setComment(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: comment, change: (e) => setComment(e.target.value), label: "comment", manual: false, json: false, sample: 'Q4 software license' }, "p1-8842", undefined)} /></div>
         <button onClick={create} className="btn-primary">Submit</button>
       </div>
       <Err msg={err} />

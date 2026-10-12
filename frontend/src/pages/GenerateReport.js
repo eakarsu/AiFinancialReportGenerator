@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getCompanies, generateFinalReport } from '../services/api';
+import FormattedAIReport from '../components/FormattedAIReport';
 import { FileText, Download, Brain, Building2, Calendar, CheckCircle, Loader, Zap } from 'lucide-react';
 
 function GenerateReport() {
@@ -11,40 +12,6 @@ function GenerateReport() {
   const [generating, setGenerating] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
-
-  // Render AI content with professional formatting - simple and clean
-  const renderAiContent = (content) => {
-    if (!content) return null;
-
-    // Clean up markdown and format nicely
-    const formatContent = (text) => {
-      return text
-        // Remove markdown headers but keep text
-        .replace(/^#{1,6}\s*/gm, '')
-        // Convert **bold** to styled spans
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        // Convert *italic* to styled spans
-        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-        // Clean up extra dashes
-        .replace(/^--\s*/gm, '')
-        // Clean up multiple newlines
-        .replace(/\n{3,}/g, '\n\n');
-    };
-
-    const formattedContent = formatContent(content);
-
-    return (
-      <div
-        style={{
-          fontSize: '14px',
-          lineHeight: '1.9',
-          color: '#374151',
-          whiteSpace: 'pre-wrap'
-        }}
-        dangerouslySetInnerHTML={{ __html: formattedContent }}
-      />
-    );
-  };
 
   useEffect(() => {
     fetchCompanies();
@@ -175,6 +142,20 @@ Powered by Claude AI
             </h3>
           </div>
           <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div aria-label="Report examples" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {[
+                ['Year end review', 'comprehensive', 'FY 2024', true],
+                ['Board briefing', 'executive', 'Q4 2024', true],
+                ['Quarterly review', 'quarterly', 'Q3 2024', true]
+              ].map(([label, type, samplePeriod, useAI]) => (
+                <button key={label} type="button" className="btn btn-secondary" onClick={() => {
+                  setReportType(type);
+                  setPeriod(samplePeriod);
+                  setIncludeAI(useAI);
+                }}>{label}</button>
+              ))}
+              {!selectedCompany && <p role="status">Select a real company before generating a report.</p>}
+            </div>
             {/* Company Selection */}
             <div>
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
@@ -516,7 +497,7 @@ Powered by Claude AI
                       padding: '24px',
                       boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
                     }}>
-                      {renderAiContent(report.ai_insights)}
+                      <FormattedAIReport response={report.ai_insights} title="AI insights" />
                     </div>
                   </div>
                 )}

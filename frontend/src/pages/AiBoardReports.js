@@ -1,3 +1,6 @@
+import { reportText } from "../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
 import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Sparkles, Edit2, Trash2, X, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Target, Users, BarChart3 } from 'lucide-react';
 import {
@@ -23,6 +26,8 @@ const parseAIResponse = (data) => {
 };
 
 function AiBoardReports() {
+  const fullAIExamples = useFullAIExamples();
+
   const [reports, setReports] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -390,7 +395,7 @@ function AiBoardReports() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {parsed.key_achievements.map((item, i) => (
                   <span key={i} style={{ padding: '6px 12px', background: 'rgba(134, 239, 172, 0.2)', borderRadius: '6px', fontSize: '13px', color: '#86efac' }}>
-                    ✓ {typeof item === 'string' ? item : item.achievement || JSON.stringify(item)}
+                    ✓ {typeof item === 'string' ? item : item.achievement || reportText(item)}
                   </span>
                 ))}
               </div>
@@ -403,7 +408,7 @@ function AiBoardReports() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {parsed.key_challenges.map((item, i) => (
                   <span key={i} style={{ padding: '6px 12px', background: 'rgba(252, 165, 165, 0.2)', borderRadius: '6px', fontSize: '13px', color: '#fca5a5' }}>
-                    {typeof item === 'string' ? item : item.challenge || JSON.stringify(item)}
+                    {typeof item === 'string' ? item : item.challenge || reportText(item)}
                   </span>
                 ))}
               </div>
@@ -421,7 +426,7 @@ function AiBoardReports() {
     }
 
     // Fallback to plain text display (strip any remaining markdown)
-    let displayText = typeof summary === 'string' ? summary : JSON.stringify(summary, null, 2);
+    let displayText = typeof summary === 'string' ? summary : reportText(summary);
     if (displayText.includes('```')) {
       displayText = displayText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     }
@@ -476,7 +481,7 @@ function AiBoardReports() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {parsed.growth_drivers.map((driver, i) => (
                   <span key={i} style={{ padding: '6px 12px', background: '#dcfce7', borderRadius: '6px', fontSize: '13px', color: '#166534' }}>
-                    ↑ {typeof driver === 'string' ? driver : driver.driver || JSON.stringify(driver)}
+                    ↑ {typeof driver === 'string' ? driver : driver.driver || reportText(driver)}
                   </span>
                 ))}
               </div>
@@ -489,7 +494,7 @@ function AiBoardReports() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {parsed.headwinds.map((item, i) => (
                   <span key={i} style={{ padding: '6px 12px', background: '#fef2f2', borderRadius: '6px', fontSize: '13px', color: '#991b1b' }}>
-                    ↓ {typeof item === 'string' ? item : item.headwind || JSON.stringify(item)}
+                    ↓ {typeof item === 'string' ? item : item.headwind || reportText(item)}
                   </span>
                 ))}
               </div>
@@ -500,7 +505,7 @@ function AiBoardReports() {
     }
 
     // Fallback to plain text display (strip any remaining markdown)
-    let displayText = typeof outlook === 'string' ? outlook : JSON.stringify(outlook, null, 2);
+    let displayText = typeof outlook === 'string' ? outlook : reportText(outlook);
     if (displayText.includes('```')) {
       displayText = displayText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     }
@@ -613,21 +618,21 @@ function AiBoardReports() {
               <h3>{editMode ? 'Edit Board Report' : 'Generate Board Report'}</h3>
               <button onClick={() => setShowFormModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
             </div>
-            <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+            <form onSubmit={handleSubmit} style={{ padding: '24px' }} data-full-ai-workspace="AiBoardReports"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading || generating)} />
               <div className="form-group">
                 <label>Company</label>
-                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required>
+                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required data-full-ai-field={fullAIExamples.bind({ current: formData.company_id, change: (e) => setFormData({ ...formData, company_id: e.target.value }), label: "formData.company_id", manual: false, json: false, sample: '' }, "p1-31145", undefined)}>
                   <option value="">Select Company</option>
                   {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Report Title</label>
-                <input type="text" value={formData.report_title} onChange={(e) => setFormData({ ...formData, report_title: e.target.value })} placeholder="e.g., Q4 2024 Board Report" required />
+                <input type="text" value={formData.report_title} onChange={(e) => setFormData({ ...formData, report_title: e.target.value })} placeholder="e.g., Q4 2024 Board Report" required data-full-ai-field={fullAIExamples.bind({ current: formData.report_title, change: (e) => setFormData({ ...formData, report_title: e.target.value }), label: "formData.report_title", manual: false, json: false, sample: '' }, "p1-31567", undefined)} />
               </div>
               <div className="form-group">
                 <label>Report Period</label>
-                <select value={formData.report_period} onChange={(e) => setFormData({ ...formData, report_period: e.target.value })}>
+                <select value={formData.report_period} onChange={(e) => setFormData({ ...formData, report_period: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: formData.report_period, change: (e) => setFormData({ ...formData, report_period: e.target.value }), label: "formData.report_period", manual: false, json: false, sample: 'Q4 2024' }, "p1-31871", undefined)}>
                   <option value="Q1 2024">Q1 2024</option>
                   <option value="Q2 2024">Q2 2024</option>
                   <option value="Q3 2024">Q3 2024</option>

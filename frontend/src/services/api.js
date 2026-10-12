@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const configuredApiUrl = (process.env.REACT_APP_API_URL || 'http://localhost:5001/api').replace(/\/$/, '');
+const API_BASE_URL = configuredApiUrl.endsWith('/api') ? configuredApiUrl : `${configuredApiUrl}/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -8,6 +9,15 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// The two raw-pg list routes use { data, pagination }. Keep the array
+// contract expected by their existing page components, and fail visibly if
+// the server returns a different shape rather than rendering an empty list.
+const collectionResponse = (response) => {
+  const rows = Array.isArray(response.data) ? response.data : response.data?.data;
+  if (!Array.isArray(rows)) throw new TypeError('Expected an array in the list API response');
+  return { ...response, data: rows, pagination: response.data?.pagination };
+};
 
 // Attach JWT bearer token from localStorage on every request.
 api.interceptors.request.use((config) => {
@@ -52,14 +62,14 @@ export const getAlerts = () => api.get('/dashboard/alerts');
 export const getKpiDashboard = () => api.get('/dashboard/kpi-dashboard');
 
 // Companies
-export const getCompanies = () => api.get('/companies');
+export const getCompanies = () => api.get('/companies', { params: { limit: 100 } }).then(collectionResponse);
 export const getCompany = (id) => api.get(`/companies/${id}`);
 export const createCompany = (data) => api.post('/companies', data);
 export const updateCompany = (id, data) => api.put(`/companies/${id}`, data);
 export const deleteCompany = (id) => api.delete(`/companies/${id}`);
 
 // Financial Statements
-export const getFinancialStatements = (params) => api.get('/financial-statements', { params });
+export const getFinancialStatements = (params) => api.get('/financial-statements', { params: { limit: 100, ...params } }).then(collectionResponse);
 export const getFinancialStatement = (id) => api.get(`/financial-statements/${id}`);
 export const createFinancialStatement = (data) => api.post('/financial-statements', data);
 export const updateFinancialStatement = (id, data) => api.put(`/financial-statements/${id}`, data);

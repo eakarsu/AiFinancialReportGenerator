@@ -1,3 +1,6 @@
+import { reportText } from "../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
 import React, { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, Plus, Sparkles, Eye, Edit2, Trash2, X, AlertTriangle, CheckCircle, Target, DollarSign, Clock, Shield, BarChart3, Lightbulb, Activity, FileText } from 'lucide-react';
 import {
@@ -23,6 +26,8 @@ const parseAIResponse = (data) => {
 };
 
 function AiVarianceExplainer() {
+  const fullAIExamples = useFullAIExamples();
+
   const [variances, setVariances] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -324,7 +329,7 @@ function AiVarianceExplainer() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {analysis.contributing_factors.map((factor, i) => (
                 <span key={i} style={{ padding: '8px 16px', background: 'white', borderRadius: '20px', fontSize: '13px', color: '#78350f', border: '1px solid #fde68a' }}>
-                  {typeof factor === 'string' ? factor : factor.factor || JSON.stringify(factor)}
+                  {typeof factor === 'string' ? factor : factor.factor || reportText(factor)}
                 </span>
               ))}
             </div>
@@ -353,7 +358,7 @@ function AiVarianceExplainer() {
                   <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#dcfce7', color: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '600' }}>
                     {i + 1}
                   </div>
-                  <span style={{ color: '#1e293b' }}>{typeof measure === 'string' ? measure : measure.measure || JSON.stringify(measure)}</span>
+                  <span style={{ color: '#1e293b' }}>{typeof measure === 'string' ? measure : measure.measure || reportText(measure)}</span>
                 </div>
               ))}
             </div>
@@ -370,7 +375,7 @@ function AiVarianceExplainer() {
               {analysis.kpis_to_monitor.map((kpi, i) => (
                 <span key={i} style={{ padding: '8px 16px', background: 'white', borderRadius: '8px', fontSize: '13px', color: '#5b21b6', border: '1px solid #c4b5fd', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Target size={14} />
-                  {typeof kpi === 'string' ? kpi : kpi.name || JSON.stringify(kpi)}
+                  {typeof kpi === 'string' ? kpi : kpi.name || reportText(kpi)}
                 </span>
               ))}
             </div>
@@ -568,26 +573,26 @@ function AiVarianceExplainer() {
               <h3>{editMode ? 'Edit Variance' : 'New Variance Explanation'}</h3>
               <button onClick={() => setShowFormModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
             </div>
-            <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+            <form onSubmit={handleSubmit} style={{ padding: '24px' }} data-full-ai-workspace="AiVarianceExplainer"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading || analyzing)} />
               <div className="form-group">
                 <label>Company</label>
-                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required>
+                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required data-full-ai-field={fullAIExamples.bind({ current: formData.company_id, change: (e) => setFormData({ ...formData, company_id: e.target.value }), label: "formData.company_id", manual: false, json: false, sample: '' }, "p1-31533", undefined)}>
                   <option value="">Select Company</option>
                   {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Title</label>
-                <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g., Marketing Q4 Variance" required />
+                <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="e.g., Marketing Q4 Variance" required data-full-ai-field={fullAIExamples.bind({ current: formData.title, change: (e) => setFormData({ ...formData, title: e.target.value }), label: "formData.title", manual: false, json: false, sample: '' }, "p1-31948", undefined)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label>Period</label>
-                  <input type="text" value={formData.period} onChange={(e) => setFormData({ ...formData, period: e.target.value })} placeholder="Q4 2024" required />
+                  <input type="text" value={formData.period} onChange={(e) => setFormData({ ...formData, period: e.target.value })} placeholder="Q4 2024" required data-full-ai-field={fullAIExamples.bind({ current: formData.period, change: (e) => setFormData({ ...formData, period: e.target.value }), label: "formData.period", manual: false, json: false, sample: 'Q4 2024' }, "p1-32331", undefined)} />
                 </div>
                 <div className="form-group">
                   <label>Department</label>
-                  <select value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required>
+                  <select value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} required data-full-ai-field={fullAIExamples.bind({ current: formData.department, change: (e) => setFormData({ ...formData, department: e.target.value }), label: "formData.department", manual: false, json: false, sample: '' }, "p1-32609", undefined)}>
                     <option value="">Select Department</option>
                     <option value="Sales">Sales</option>
                     <option value="Marketing">Marketing</option>
@@ -601,16 +606,16 @@ function AiVarianceExplainer() {
               </div>
               <div className="form-group">
                 <label>Category</label>
-                <input type="text" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} placeholder="e.g., Salaries, Equipment" required />
+                <input type="text" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} placeholder="e.g., Salaries, Equipment" required data-full-ai-field={fullAIExamples.bind({ current: formData.category, change: (e) => setFormData({ ...formData, category: e.target.value }), label: "formData.category", manual: false, json: false, sample: '' }, "p1-33370", undefined)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label>Budgeted Amount ($)</label>
-                  <input type="number" value={formData.budgeted_amount} onChange={(e) => setFormData({ ...formData, budgeted_amount: e.target.value })} placeholder="100000" required />
+                  <input type="number" value={formData.budgeted_amount} onChange={(e) => setFormData({ ...formData, budgeted_amount: e.target.value })} placeholder="100000" required data-full-ai-field={fullAIExamples.bind({ current: formData.budgeted_amount, change: (e) => setFormData({ ...formData, budgeted_amount: e.target.value }), label: "formData.budgeted_amount", manual: false, json: false, sample: '' }, "p1-33770", undefined)} />
                 </div>
                 <div className="form-group">
                   <label>Actual Amount ($)</label>
-                  <input type="number" value={formData.actual_amount} onChange={(e) => setFormData({ ...formData, actual_amount: e.target.value })} placeholder="120000" required />
+                  <input type="number" value={formData.actual_amount} onChange={(e) => setFormData({ ...formData, actual_amount: e.target.value })} placeholder="120000" required data-full-ai-field={fullAIExamples.bind({ current: formData.actual_amount, change: (e) => setFormData({ ...formData, actual_amount: e.target.value }), label: "formData.actual_amount", manual: false, json: false, sample: '' }, "p1-34074", undefined)} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>

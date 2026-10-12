@@ -11,8 +11,14 @@ function Login({ onLogin }) {
   const navigate = useNavigate();
 
   const handleDemoLogin = () => {
-    setEmail(process.env.REACT_APP_DEMO_EMAIL || '');
-    setPassword(process.env.REACT_APP_DEMO_PASSWORD || '');
+    const demoEmail = process.env.REACT_APP_DEMO_EMAIL;
+    const demoPassword = process.env.REACT_APP_DEMO_PASSWORD;
+    if (!demoEmail || !demoPassword) {
+      setError('Demo credentials are not configured for this app.');
+      return;
+    }
+    setEmail(demoEmail);
+    setPassword(demoPassword);
     setError('');
   };
 
@@ -118,11 +124,11 @@ function Login({ onLogin }) {
             padding: '14px 24px', fontSize: '16px', fontWeight: '600', borderRadius: '10px',
             background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', border: 'none', cursor: 'pointer',
           }}>
-            <Sparkles size={18} /> Auto Fill Demo Credentials
+            <Sparkles size={18} /> Fill Demo Credentials
           </button>
 
           <p style={{ textAlign: 'center', color: '#64748b', fontSize: '13px', margin: 0 }}>
-            Click "Auto Fill Demo Credentials" to auto-fill demo credentials
+            Fill the configured demo credentials, then select Sign In.
           </p>
 
           <p style={{ textAlign: 'center', color: '#64748b', fontSize: '14px', margin: '4px 0 0' }}>

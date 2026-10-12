@@ -1,3 +1,6 @@
+import { reportText } from "../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Plus, Sparkles, Edit2, Trash2, X, Target, AlertTriangle, BarChart3, Activity } from 'lucide-react';
 import {
@@ -23,6 +26,8 @@ const parseAIResponse = (data) => {
 };
 
 function AiForecastGenerator() {
+  const fullAIExamples = useFullAIExamples();
+
   const [forecasts, setForecasts] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -244,7 +249,7 @@ function AiForecastGenerator() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {parsed.key_insights.map((insight, i) => (
                   <span key={i} style={{ padding: '8px 16px', background: 'white', borderRadius: '8px', fontSize: '13px', color: '#334155', border: '1px solid #e0e7ff' }}>
-                    {typeof insight === 'string' ? insight : insight.insight || JSON.stringify(insight)}
+                    {typeof insight === 'string' ? insight : insight.insight || reportText(insight)}
                   </span>
                 ))}
               </div>
@@ -255,7 +260,7 @@ function AiForecastGenerator() {
               <div style={{ fontWeight: '600', color: '#4f46e5', marginBottom: '8px', fontSize: '14px' }}>Recommendations</div>
               {parsed.recommendations.map((rec, i) => (
                 <div key={i} style={{ padding: '12px', background: 'white', borderRadius: '8px', marginBottom: '8px', borderLeft: '3px solid #10b981' }}>
-                  <span style={{ color: '#334155' }}>{typeof rec === 'string' ? rec : rec.recommendation || rec.action || JSON.stringify(rec)}</span>
+                  <span style={{ color: '#334155' }}>{typeof rec === 'string' ? rec : rec.recommendation || rec.action || reportText(rec)}</span>
                 </div>
               ))}
             </div>
@@ -265,7 +270,7 @@ function AiForecastGenerator() {
     }
 
     // Fallback to plain text display
-    const displayText = typeof analysis === 'string' ? analysis : JSON.stringify(analysis, null, 2);
+    const displayText = typeof analysis === 'string' ? analysis : reportText(analysis);
     return (
       <div style={{ marginBottom: '24px', padding: '20px', background: 'linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)', borderRadius: '12px', border: '1px solid #c7d2fe' }}>
         <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#4f46e5' }}>
@@ -398,22 +403,22 @@ function AiForecastGenerator() {
               <h3>{editMode ? 'Edit Forecast' : 'Generate AI Forecast'}</h3>
               <button onClick={() => setShowFormModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
             </div>
-            <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+            <form onSubmit={handleSubmit} style={{ padding: '24px' }} data-full-ai-workspace="AiForecastGenerator"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading || generating)} />
               <div className="form-group">
                 <label>Company</label>
-                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required>
+                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required data-full-ai-field={fullAIExamples.bind({ current: formData.company_id, change: (e) => setFormData({ ...formData, company_id: e.target.value }), label: "formData.company_id", manual: false, json: false, sample: '' }, "p1-19129", undefined)}>
                   <option value="">Select Company</option>
                   {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Forecast Name</label>
-                <input type="text" value={formData.forecast_name} onChange={(e) => setFormData({ ...formData, forecast_name: e.target.value })} placeholder="e.g., Revenue Forecast 2025" required />
+                <input type="text" value={formData.forecast_name} onChange={(e) => setFormData({ ...formData, forecast_name: e.target.value })} placeholder="e.g., Revenue Forecast 2025" required data-full-ai-field={fullAIExamples.bind({ current: formData.forecast_name, change: (e) => setFormData({ ...formData, forecast_name: e.target.value }), label: "formData.forecast_name", manual: false, json: false, sample: '' }, "p1-19552", undefined)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label>Forecast Type</label>
-                  <select value={formData.forecast_type} onChange={(e) => setFormData({ ...formData, forecast_type: e.target.value })}>
+                  <select value={formData.forecast_type} onChange={(e) => setFormData({ ...formData, forecast_type: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: formData.forecast_type, change: (e) => setFormData({ ...formData, forecast_type: e.target.value }), label: "formData.forecast_type", manual: false, json: false, sample: 'revenue' }, "p1-19958", undefined)}>
                     <option value="revenue">Revenue</option>
                     <option value="expense">Expense</option>
                     <option value="profit">Profit</option>
@@ -423,7 +428,7 @@ function AiForecastGenerator() {
                 </div>
                 <div className="form-group">
                   <label>Time Horizon</label>
-                  <select value={formData.time_horizon} onChange={(e) => setFormData({ ...formData, time_horizon: e.target.value })}>
+                  <select value={formData.time_horizon} onChange={(e) => setFormData({ ...formData, time_horizon: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: formData.time_horizon, change: (e) => setFormData({ ...formData, time_horizon: e.target.value }), label: "formData.time_horizon", manual: false, json: false, sample: '12 months' }, "p1-20541", undefined)}>
                     <option value="3 months">3 Months</option>
                     <option value="6 months">6 Months</option>
                     <option value="12 months">12 Months</option>
@@ -433,7 +438,7 @@ function AiForecastGenerator() {
               </div>
               <div className="form-group">
                 <label>Metric Name</label>
-                <input type="text" value={formData.metric_name} onChange={(e) => setFormData({ ...formData, metric_name: e.target.value })} placeholder="e.g., Total Revenue, Operating Expenses" required />
+                <input type="text" value={formData.metric_name} onChange={(e) => setFormData({ ...formData, metric_name: e.target.value })} placeholder="e.g., Total Revenue, Operating Expenses" required data-full-ai-field={fullAIExamples.bind({ current: formData.metric_name, change: (e) => setFormData({ ...formData, metric_name: e.target.value }), label: "formData.metric_name", manual: false, json: false, sample: 'Total Revenue' }, "p1-21087", undefined)} />
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
                 <button type="button" onClick={() => setShowFormModal(false)} className="btn-secondary">Cancel</button>

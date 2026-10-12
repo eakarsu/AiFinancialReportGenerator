@@ -1,8 +1,11 @@
+import FormattedAIReport from "../components/FormattedAIReport";
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples";
 import React, { useState } from 'react';
 import { Shield, Sparkles, AlertTriangle, CheckCircle, X } from 'lucide-react';
 import { aiAuditReadiness } from '../services/api';
 
 function AiAuditReadiness() {
+  const fullAIExamples = useFullAIExamples();
   const [form, setForm] = useState({
     company_name: '',
     audit_type: 'financial',
@@ -46,15 +49,16 @@ function AiAuditReadiness() {
       </div>
 
       <div className="card" style={{ padding: '24px', marginBottom: '24px' }}>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} data-full-ai-workspace="AiAuditReadiness">
+          <FullAIExamples controller={fullAIExamples} disabled={loading} />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="form-group">
               <label>Company Name</label>
-              <input value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} placeholder="Acme Corp" required />
+              <input value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: form.company_name, change: (e) => setForm(prev => ({ ...prev, company_name: e.target.value })), label: "company_name", samples: ['Northstar Components', 'Meridian Services', 'Harbor Retail Group'] }, "company_name")} placeholder="Acme Corp" required />
             </div>
             <div className="form-group">
               <label>Audit Type</label>
-              <select value={form.audit_type} onChange={(e) => setForm({ ...form, audit_type: e.target.value })}>
+              <select value={form.audit_type} onChange={(e) => setForm({ ...form, audit_type: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: form.audit_type, change: (e) => setForm(prev => ({ ...prev, audit_type: e.target.value })), label: "audit_type", sample: 'financial' }, "audit_type")}>
                 <option value="financial">Financial</option>
                 <option value="operational">Operational</option>
                 <option value="compliance">Compliance</option>
@@ -63,20 +67,20 @@ function AiAuditReadiness() {
             </div>
             <div className="form-group">
               <label>Period</label>
-              <input value={form.period} onChange={(e) => setForm({ ...form, period: e.target.value })} placeholder="FY 2024" required />
+              <input value={form.period} onChange={(e) => setForm({ ...form, period: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: form.period, change: (e) => setForm(prev => ({ ...prev, period: e.target.value })), label: "period", samples: ['FY 2026', 'Q3 2026', 'FY 2025'] }, "period")} placeholder="FY 2024" required />
             </div>
             <div className="form-group">
               <label>Documents Available</label>
-              <input value={form.documents_available} onChange={(e) => setForm({ ...form, documents_available: e.target.value })} />
+              <input value={form.documents_available} onChange={(e) => setForm({ ...form, documents_available: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: form.documents_available, change: (e) => setForm(prev => ({ ...prev, documents_available: e.target.value })), label: "documents_available", samples: ['Trial balance, general ledger, AR aging, AP aging', 'Bank statements, payroll register, vendor contracts', 'General ledger, inventory rollforward, board minutes'] }, "documents_available")} />
             </div>
           </div>
           <div className="form-group">
             <label>Known Issues</label>
-            <textarea rows={3} value={form.known_issues} onChange={(e) => setForm({ ...form, known_issues: e.target.value })} />
+            <textarea rows={3} value={form.known_issues} onChange={(e) => setForm({ ...form, known_issues: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: form.known_issues, change: (e) => setForm(prev => ({ ...prev, known_issues: e.target.value })), label: "known_issues", samples: ['Revenue cut-off requires review at year end.', 'Payroll approvals were delayed in September.', 'Inventory counts differ from the ledger.'] }, "known_issues")} />
           </div>
           <div className="form-group">
             <label>Last Audit Findings</label>
-            <textarea rows={3} value={form.last_audit_findings} onChange={(e) => setForm({ ...form, last_audit_findings: e.target.value })} />
+            <textarea rows={3} value={form.last_audit_findings} onChange={(e) => setForm({ ...form, last_audit_findings: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: form.last_audit_findings, change: (e) => setForm(prev => ({ ...prev, last_audit_findings: e.target.value })), label: "last_audit_findings", samples: ['Prior audit noted delayed bank reconciliations.', 'Prior audit requested stronger access reviews.', 'Prior audit found incomplete inventory support.'] }, "last_audit_findings")} />
           </div>
           <button type="submit" disabled={loading} className="btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)' }}>
@@ -154,7 +158,7 @@ function AiAuditReadiness() {
           )}
 
           {!findings.length && !docGaps.length && !controlWeaknesses.length && !remediation.length && (
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{JSON.stringify(result, null, 2)}</pre>
+            <FormattedAIReport response={result} />
           )}
         </div>
       )}

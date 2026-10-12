@@ -7,6 +7,7 @@ import {
 import { getAiResponses, getAiResponse, getAiResponseStats, deleteAiResponse, analyzeAiHistory, summarizeAiResponse } from '../services/api';
 import { useToast } from '../components/Toast';
 import ConfirmDialog from '../components/ConfirmDialog';
+import FormattedAIReport from '../components/FormattedAIReport';
 
 const featureIcons = {
   forecast_generator: TrendingUp,
@@ -157,54 +158,9 @@ function AiResponsesHistory() {
     });
   };
 
-  const renderParsedResponse = (parsed) => {
-    if (!parsed) return <p className="text-gray-500">No parsed data available</p>;
-
-    const data = parseAIResponse(parsed);
-    if (!data) return <p className="text-gray-500">Could not parse response</p>;
-
-    return (
-      <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-        {Object.entries(data).map(([key, value]) => (
-          <div key={key} style={{ marginBottom: '16px' }}>
-            <div style={{
-              fontWeight: '600',
-              color: '#374151',
-              textTransform: 'capitalize',
-              marginBottom: '8px',
-              fontSize: '14px'
-            }}>
-              {key.replace(/_/g, ' ')}
-            </div>
-            <div style={{
-              background: '#f9fafb',
-              padding: '12px',
-              borderRadius: '8px',
-              fontSize: '13px'
-            }}>
-              {typeof value === 'object' ? (
-                Array.isArray(value) ? (
-                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                    {value.slice(0, 10).map((item, i) => (
-                      <li key={i} style={{ marginBottom: '4px' }}>
-                        {typeof item === 'object' ? (item.recommendation || item.insight || item.action || JSON.stringify(item)) : String(item)}
-                      </li>
-                    ))}
-                    {value.length > 10 && <li>...and {value.length - 10} more</li>}
-                  </ul>
-                ) : (
-                  <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: '12px' }}>
-                    {JSON.stringify(value, null, 2)}
-                  </pre>
-                )
-              ) : (
-                <span>{String(value)}</span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+  const renderParsedResponse = (parsed, raw) => {
+    const data = parsed === null || parsed === undefined ? null : parseAIResponse(parsed);
+    return <FormattedAIReport response={data ?? raw ?? 'No response available'} title="Saved AI response" />;
   };
 
   const renderAnalysisResults = () => {
@@ -522,21 +478,7 @@ function AiResponsesHistory() {
                         </div>
                       )}
                       <div>
-                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '4px' }}>RAW RESPONSE</div>
-                        <div style={{
-                          background: '#1f2937',
-                          color: '#e5e7eb',
-                          padding: '12px',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          fontFamily: 'monospace',
-                          maxHeight: '200px',
-                          overflow: 'auto',
-                          whiteSpace: 'pre-wrap'
-                        }}>
-                          {response.raw_response?.substring(0, 1000)}
-                          {response.raw_response?.length > 1000 && '...'}
-                        </div>
+                        <FormattedAIReport response={response.parsed_response ?? response.raw_response} title="Saved AI response" />
                       </div>
                     </div>
                   )}
@@ -630,26 +572,9 @@ function AiResponsesHistory() {
               {/* Parsed Response */}
               <div style={{ marginBottom: '24px' }}>
                 <h4 style={{ margin: '0 0 12px 0', color: '#374151' }}>Parsed Response</h4>
-                {renderParsedResponse(selectedResponse.parsed_response)}
+                {renderParsedResponse(selectedResponse.parsed_response, selectedResponse.raw_response)}
               </div>
 
-              {/* Raw Response */}
-              <div>
-                <h4 style={{ margin: '0 0 12px 0', color: '#374151' }}>Raw AI Response</h4>
-                <div style={{
-                  background: '#1f2937',
-                  color: '#e5e7eb',
-                  padding: '16px',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  fontFamily: 'monospace',
-                  maxHeight: '300px',
-                  overflow: 'auto',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                  {selectedResponse.raw_response}
-                </div>
-              </div>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { Search, ChevronUp, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRig
 import { TableSkeleton } from './LoadingSkeleton';
 import EmptyState from './EmptyState';
 
-function DataTable({ columns, data, onRowClick, loading, pageSize = 10 }) {
+function DataTable({ columns, data, onRowClick, loading, pageSize = 20 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
@@ -11,7 +11,7 @@ function DataTable({ columns, data, onRowClick, loading, pageSize = 10 }) {
 
   // Search
   const filtered = useMemo(() => {
-    if (!data) return [];
+    if (!Array.isArray(data)) return [];
     if (!searchTerm.trim()) return data;
     const term = searchTerm.toLowerCase();
     return data.filter(row =>

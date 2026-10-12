@@ -1,3 +1,6 @@
+import { reportText } from "../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
 import React, { useState, useEffect } from 'react';
 import { Tag, Plus, Sparkles, Eye, Edit2, Trash2, X, DollarSign, CheckCircle, AlertTriangle, TrendingUp, Shield, Receipt } from 'lucide-react';
 import {
@@ -23,6 +26,8 @@ const parseAIResponse = (data) => {
 };
 
 function AiExpenseCategorizer() {
+  const fullAIExamples = useFullAIExamples();
+
   const [expenses, setExpenses] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -281,7 +286,7 @@ function AiExpenseCategorizer() {
     }
 
     // Fallback to plain text display
-    const displayText = typeof reasoning === 'string' ? reasoning : JSON.stringify(reasoning, null, 2);
+    const displayText = typeof reasoning === 'string' ? reasoning : reportText(reasoning);
     return (
       <div style={{ marginBottom: '24px', padding: '20px', background: 'linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)', borderRadius: '12px', border: '1px solid #c7d2fe' }}>
         <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', color: '#4f46e5' }}>
@@ -457,35 +462,35 @@ function AiExpenseCategorizer() {
               <h3>{editMode ? 'Edit Expense' : 'New Expense for Categorization'}</h3>
               <button onClick={() => setShowFormModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
             </div>
-            <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+            <form onSubmit={handleSubmit} style={{ padding: '24px' }} data-full-ai-workspace="AiExpenseCategorizer"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading || analyzing)} />
               <div className="form-group">
                 <label>Company</label>
-                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required>
+                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required data-full-ai-field={fullAIExamples.bind({ current: formData.company_id, change: (e) => setFormData({ ...formData, company_id: e.target.value }), label: "formData.company_id", manual: false, json: false, sample: '' }, "p1-23677", undefined)}>
                   <option value="">Select Company</option>
                   {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Expense Description</label>
-                <input type="text" value={formData.expense_description} onChange={(e) => setFormData({ ...formData, expense_description: e.target.value })} placeholder="e.g., Software subscription renewal" required />
+                <input type="text" value={formData.expense_description} onChange={(e) => setFormData({ ...formData, expense_description: e.target.value })} placeholder="e.g., Software subscription renewal" required data-full-ai-field={fullAIExamples.bind({ current: formData.expense_description, change: (e) => setFormData({ ...formData, expense_description: e.target.value }), label: "formData.expense_description", manual: false, json: false, sample: '' }, "p1-24106", undefined)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label>Amount ($)</label>
-                  <input type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" required />
+                  <input type="number" step="0.01" value={formData.amount} onChange={(e) => setFormData({ ...formData, amount: e.target.value })} placeholder="0.00" required data-full-ai-field={fullAIExamples.bind({ current: formData.amount, change: (e) => setFormData({ ...formData, amount: e.target.value }), label: "formData.amount", manual: false, json: false, sample: '' }, "p1-24529", undefined)} />
                 </div>
                 <div className="form-group">
                   <label>Date</label>
-                  <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required />
+                  <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required data-full-ai-field={fullAIExamples.bind({ current: formData.date, change: (e) => setFormData({ ...formData, date: e.target.value }), label: "formData.date", manual: false, json: false, sample: new Date().toISOString().split('T')[0] }, "p1-24812", undefined)} />
                 </div>
               </div>
               <div className="form-group">
                 <label>Vendor</label>
-                <input type="text" value={formData.vendor} onChange={(e) => setFormData({ ...formData, vendor: e.target.value })} placeholder="e.g., Amazon Web Services" />
+                <input type="text" value={formData.vendor} onChange={(e) => setFormData({ ...formData, vendor: e.target.value })} placeholder="e.g., Amazon Web Services" data-full-ai-field={fullAIExamples.bind({ current: formData.vendor, change: (e) => setFormData({ ...formData, vendor: e.target.value }), label: "formData.vendor", manual: false, json: false, sample: '' }, "p1-25075", undefined)} />
               </div>
               <div className="form-group">
                 <label>Receipt Details (Optional)</label>
-                <textarea value={formData.receipt_text} onChange={(e) => setFormData({ ...formData, receipt_text: e.target.value })} placeholder="Paste receipt text or additional details for better categorization..." rows={4} style={{ width: '100%', padding: '12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', resize: 'vertical' }} />
+                <textarea value={formData.receipt_text} onChange={(e) => setFormData({ ...formData, receipt_text: e.target.value })} placeholder="Paste receipt text or additional details for better categorization..." rows={4} style={{ width: '100%', padding: '12px', border: '2px solid #e5e7eb', borderRadius: '8px', fontSize: '14px', resize: 'vertical' }} data-full-ai-field={fullAIExamples.bind({ current: formData.receipt_text, change: (e) => setFormData({ ...formData, receipt_text: e.target.value }), label: "formData.receipt_text", manual: false, json: false, sample: '' }, "p1-25370", undefined)} />
               </div>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
                 <button type="button" onClick={() => setShowFormModal(false)} className="btn-secondary">Cancel</button>

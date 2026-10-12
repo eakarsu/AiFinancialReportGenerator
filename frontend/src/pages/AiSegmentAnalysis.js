@@ -1,8 +1,11 @@
+import FormattedAIReport from "../components/FormattedAIReport";
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples";
 import React, { useState } from 'react';
 import { PieChart, Sparkles, Plus, Trash2, X } from 'lucide-react';
 import { aiSegmentAnalysis } from '../services/api';
 
 function AiSegmentAnalysis() {
+  const fullAIExamples = useFullAIExamples();
   const [segments, setSegments] = useState([
     { name: 'Software', revenue: 5000000, opex: 3000000, capital: 2000000 },
     { name: 'Services', revenue: 2000000, opex: 1700000, capital: 500000 },
@@ -50,30 +53,31 @@ function AiSegmentAnalysis() {
         <p style={{ color: '#64748b', margin: '4px 0 0' }}>Score business segments, identify outperformers, propose capital reallocation</p>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} data-full-ai-workspace="AiSegmentAnalysis">
+        <FullAIExamples controller={fullAIExamples} disabled={loading} />
         <div className="card" style={{ padding: 24, marginBottom: 16 }}>
           <div className="form-group">
             <label>Period</label>
-            <input value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="FY 2024" />
+            <input value={period} onChange={(e) => setPeriod(e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: period, change: (e) => setPeriod(e.target.value), label: "period", samples: ["FY 2026", "Q3 2026", "FY 2025"] }, "period")} placeholder="FY 2024" />
           </div>
           <h3 style={{ marginTop: 16 }}>Segments</h3>
           {segments.map((s, i) => (
             <div key={i} style={{ display: 'flex', gap: 12, marginBottom: 8, alignItems: 'flex-end' }}>
               <div className="form-group" style={{ flex: 2 }}>
                 <label>Name</label>
-                <input value={s.name} onChange={(e) => updateSegment(i, 'name', e.target.value)} required />
+                <input value={s.name} onChange={(e) => updateSegment(i, 'name', e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: s.name, change: (e) => updateSegment(i, 'name', e.target.value), label: "segment name", sample: s.name }, "segment-name", i)} required />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Revenue</label>
-                <input type="number" value={s.revenue} onChange={(e) => updateSegment(i, 'revenue', e.target.value)} />
+                <input type="number" value={s.revenue} onChange={(e) => updateSegment(i, 'revenue', e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: s.revenue, change: (e) => updateSegment(i, 'revenue', e.target.value), label: "segment revenue", samples: [s.revenue, Math.round(s.revenue * 0.9), Math.round(s.revenue * 1.1)] }, "segment-revenue", i)} />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>OpEx</label>
-                <input type="number" value={s.opex} onChange={(e) => updateSegment(i, 'opex', e.target.value)} />
+                <input type="number" value={s.opex} onChange={(e) => updateSegment(i, 'opex', e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: s.opex, change: (e) => updateSegment(i, 'opex', e.target.value), label: "segment opex", samples: [s.opex, Math.round(s.opex * 0.9), Math.round(s.opex * 1.1)] }, "segment-opex", i)} />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Capital</label>
-                <input type="number" value={s.capital} onChange={(e) => updateSegment(i, 'capital', e.target.value)} />
+                <input type="number" value={s.capital} onChange={(e) => updateSegment(i, 'capital', e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: s.capital, change: (e) => updateSegment(i, 'capital', e.target.value), label: "segment capital", samples: [s.capital, Math.round(s.capital * 0.9), Math.round(s.capital * 1.1)] }, "segment-capital", i)} />
               </div>
               <button type="button" onClick={() => removeSegment(i)} className="btn-secondary"><Trash2 size={14} /></button>
             </div>
@@ -150,7 +154,7 @@ function AiSegmentAnalysis() {
           )}
 
           {!scoredSegments.length && !outperformers.length && !reallocations.length && (
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{JSON.stringify(result, null, 2)}</pre>
+            <FormattedAIReport response={result} />
           )}
         </div>
       )}

@@ -15,8 +15,10 @@ import {
   AlertCircle
 } from 'lucide-react';
 import * as api from '../services/api';
+import FullAIExamples, { useFullAIExamples } from '../components/FullAIExamples';
 
 function NaturalLanguageQuery() {
+  const fullAIExamples = useFullAIExamples();
   const [query, setQuery] = useState('');
   const [result, setResult] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
@@ -173,12 +175,14 @@ function NaturalLanguageQuery() {
       <div className="nlq-container">
         <div className="main-content">
           {/* Query Input */}
-          <div className="query-section">
+          <div className="query-section" data-full-ai-workspace="NaturalLanguageQuery">
+            <FullAIExamples controller={fullAIExamples} disabled={loading} />
             <div className="company-selector">
               <Building size={20} />
               <select
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
+                data-full-ai-field={fullAIExamples.bind({ current: selectedCompany, change: (e) => setSelectedCompany(e.target.value), label: 'company_id', reference: true }, 'company_id')}
               >
                 <option value="">All Companies</option>
                 {companies.map(c => (
@@ -195,6 +199,7 @@ function NaturalLanguageQuery() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
+                  data-full-ai-field={fullAIExamples.bind({ current: query, change: (e) => setQuery(e.target.value), label: 'financial question', samples: ['Which expense categories increased most in the latest quarter?', 'Compare quarterly revenue and gross margin for the selected company.', 'Summarize the largest budget variances and likely drivers.'] }, 'query')}
                   placeholder="Ask anything about your financial data..."
                   className="query-input"
                 />
@@ -368,7 +373,7 @@ function NaturalLanguageQuery() {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         .nlq-page {
           padding: 0;
         }

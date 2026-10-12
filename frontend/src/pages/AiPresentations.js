@@ -1,3 +1,6 @@
+import { reportText } from "../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
 import React, { useState, useEffect } from 'react';
 import { Presentation, Plus, Sparkles, Eye, Edit2, Trash2, X, ChevronRight, FileText, Layers, CheckCircle, Download } from 'lucide-react';
 import {
@@ -51,6 +54,8 @@ const getSlidesArray = (data) => {
 };
 
 function AiPresentations() {
+  const fullAIExamples = useFullAIExamples();
+
   const [presentations, setPresentations] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -175,7 +180,7 @@ function AiPresentations() {
     const renderItem = (item) => {
       if (typeof item === 'string') return item;
       if (typeof item === 'object' && item !== null) {
-        return item.title || item.name || item.text || item.description || JSON.stringify(item);
+        return item.title || item.name || item.text || item.description || reportText(item);
       }
       return String(item);
     };
@@ -329,11 +334,6 @@ function AiPresentations() {
               )}
 
               <div style={{ marginBottom: '24px' }}>
-                {/* Debug info - remove after fixing */}
-                <div style={{ background: '#fef3c7', padding: '8px', marginBottom: '12px', fontSize: '12px', borderRadius: '4px' }}>
-                  <strong>DEBUG:</strong> slides type: {typeof selectedPresentation.slides} |
-                  raw: {JSON.stringify(selectedPresentation.slides)?.substring(0, 200)}...
-                </div>
                 <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                   <Layers size={18} /> Slides ({getSlidesArray(selectedPresentation.slides).length})
                 </h4>
@@ -363,26 +363,26 @@ function AiPresentations() {
               <h3>{editMode ? 'Edit Presentation' : 'Create AI Presentation'}</h3>
               <button onClick={() => setShowFormModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
             </div>
-            <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+            <form onSubmit={handleSubmit} style={{ padding: '24px' }} data-full-ai-workspace="AiPresentations"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading || generating)} />
               <div className="form-group">
                 <label>Company</label>
-                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required>
+                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required data-full-ai-field={fullAIExamples.bind({ current: formData.company_id, change: (e) => setFormData({ ...formData, company_id: e.target.value }), label: "formData.company_id", manual: false, json: false, sample: '' }, "p1-17096", undefined)}>
                   <option value="">Select Company</option>
                   {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Title</label>
-                <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Presentation title" required />
+                <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Presentation title" required data-full-ai-field={fullAIExamples.bind({ current: formData.title, change: (e) => setFormData({ ...formData, title: e.target.value }), label: "formData.title", manual: false, json: false, sample: '' }, "p1-17511", undefined)} />
               </div>
               <div className="form-group">
                 <label>Description</label>
-                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Brief description" rows={3} />
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Brief description" rows={3} data-full-ai-field={fullAIExamples.bind({ current: formData.description, change: (e) => setFormData({ ...formData, description: e.target.value }), label: "formData.description", manual: false, json: false, sample: '' }, "p1-17791", undefined)} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="form-group">
                   <label>Source Type</label>
-                  <select value={formData.source_type} onChange={(e) => setFormData({ ...formData, source_type: e.target.value })}>
+                  <select value={formData.source_type} onChange={(e) => setFormData({ ...formData, source_type: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: formData.source_type, change: (e) => setFormData({ ...formData, source_type: e.target.value }), label: "formData.source_type", manual: false, json: false, sample: 'financial_statement' }, "p1-18172", undefined)}>
                     <option value="financial_statement">Financial Statement</option>
                     <option value="quarterly_report">Quarterly Report</option>
                     <option value="annual_report">Annual Report</option>
@@ -392,7 +392,7 @@ function AiPresentations() {
                 </div>
                 <div className="form-group">
                   <label>Theme</label>
-                  <select value={formData.theme} onChange={(e) => setFormData({ ...formData, theme: e.target.value })}>
+                  <select value={formData.theme} onChange={(e) => setFormData({ ...formData, theme: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: formData.theme, change: (e) => setFormData({ ...formData, theme: e.target.value }), label: "formData.theme", manual: false, json: false, sample: 'professional' }, "p1-18816", undefined)}>
                     <option value="professional">Professional</option>
                     <option value="modern">Modern</option>
                     <option value="executive">Executive</option>
@@ -404,7 +404,7 @@ function AiPresentations() {
               {!editMode && (
                 <div className="form-group">
                   <label>Number of Slides</label>
-                  <input type="number" value={formData.num_slides} onChange={(e) => setFormData({ ...formData, num_slides: parseInt(e.target.value) })} min={4} max={20} />
+                  <input type="number" value={formData.num_slides} onChange={(e) => setFormData({ ...formData, num_slides: parseInt(e.target.value) })} min={4} max={20} data-full-ai-field={fullAIExamples.bind({ current: formData.num_slides, change: (e) => setFormData({ ...formData, num_slides: parseInt(e.target.value) }), label: "formData.num_slides", manual: false, json: false, sample: 8 }, "p1-19454", undefined)} />
                 </div>
               )}
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>

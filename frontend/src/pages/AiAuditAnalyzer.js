@@ -1,3 +1,6 @@
+import { reportText } from "../components/FormattedAIReport";
+
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples.jsx";
 import React, { useState, useEffect } from 'react';
 import { Shield, Plus, Sparkles, Edit2, Trash2, X, AlertTriangle, CheckCircle, FileSearch, Activity, Lock } from 'lucide-react';
 import {
@@ -23,6 +26,8 @@ const parseAIResponse = (data) => {
 };
 
 function AiAuditAnalyzer() {
+  const fullAIExamples = useFullAIExamples();
+
   const [analyses, setAnalyses] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -311,7 +316,7 @@ function AiAuditAnalyzer() {
               <div style={{ fontWeight: '600', color: '#4f46e5', marginBottom: '8px', fontSize: '14px' }}>Key Findings</div>
               {parsed.key_findings.map((finding, i) => (
                 <div key={i} style={{ padding: '12px', background: 'white', borderRadius: '8px', marginBottom: '8px', borderLeft: '3px solid #8b5cf6' }}>
-                  <span style={{ color: '#334155' }}>{typeof finding === 'string' ? finding : finding.finding || finding.description || JSON.stringify(finding)}</span>
+                  <span style={{ color: '#334155' }}>{typeof finding === 'string' ? finding : finding.finding || finding.description || reportText(finding)}</span>
                 </div>
               ))}
             </div>
@@ -321,7 +326,7 @@ function AiAuditAnalyzer() {
     }
 
     // Fallback to plain text display (strip any remaining markdown)
-    let displayText = typeof summary === 'string' ? summary : JSON.stringify(summary, null, 2);
+    let displayText = typeof summary === 'string' ? summary : reportText(summary);
     if (displayText.includes('```')) {
       displayText = displayText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
     }
@@ -463,21 +468,21 @@ function AiAuditAnalyzer() {
               <h3>{editMode ? 'Edit Analysis' : 'New Audit Trail Analysis'}</h3>
               <button onClick={() => setShowFormModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
             </div>
-            <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+            <form onSubmit={handleSubmit} style={{ padding: '24px' }} data-full-ai-workspace="AiAuditAnalyzer"><FullAIExamples controller={fullAIExamples} disabled={Boolean(loading || analyzing)} />
               <div className="form-group">
                 <label>Company</label>
-                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required>
+                <select value={formData.company_id} onChange={(e) => setFormData({ ...formData, company_id: e.target.value })} required data-full-ai-field={fullAIExamples.bind({ current: formData.company_id, change: (e) => setFormData({ ...formData, company_id: e.target.value }), label: "formData.company_id", manual: false, json: false, sample: '' }, "p1-23770", undefined)}>
                   <option value="">Select Company</option>
                   {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="form-group">
                 <label>Analysis Name</label>
-                <input type="text" value={formData.analysis_name} onChange={(e) => setFormData({ ...formData, analysis_name: e.target.value })} placeholder="e.g., Q4 2024 Compliance Audit" required />
+                <input type="text" value={formData.analysis_name} onChange={(e) => setFormData({ ...formData, analysis_name: e.target.value })} placeholder="e.g., Q4 2024 Compliance Audit" required data-full-ai-field={fullAIExamples.bind({ current: formData.analysis_name, change: (e) => setFormData({ ...formData, analysis_name: e.target.value }), label: "formData.analysis_name", manual: false, json: false, sample: '' }, "p1-24193", undefined)} />
               </div>
               <div className="form-group">
                 <label>Analysis Period</label>
-                <select value={formData.analysis_period} onChange={(e) => setFormData({ ...formData, analysis_period: e.target.value })}>
+                <select value={formData.analysis_period} onChange={(e) => setFormData({ ...formData, analysis_period: e.target.value })} data-full-ai-field={fullAIExamples.bind({ current: formData.analysis_period, change: (e) => setFormData({ ...formData, analysis_period: e.target.value }), label: "formData.analysis_period", manual: false, json: false, sample: 'Q4 2024' }, "p1-24505", undefined)}>
                   <option value="Q1 2024">Q1 2024</option>
                   <option value="Q2 2024">Q2 2024</option>
                   <option value="Q3 2024">Q3 2024</option>

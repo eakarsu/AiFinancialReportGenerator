@@ -1,8 +1,11 @@
+import FormattedAIReport from "../components/FormattedAIReport";
+import FullAIExamples, { useFullAIExamples } from "../components/FullAIExamples";
 import React, { useState } from 'react';
 import { ClipboardList, Sparkles, Plus, Trash2, X, AlertTriangle } from 'lucide-react';
 import { aiCovenantTracking } from '../services/api';
 
 function AiCovenantTracking() {
+  const fullAIExamples = useFullAIExamples();
   const [covenants, setCovenants] = useState([
     { name: 'Debt Service Coverage', threshold: 1.25, type: 'min' },
     { name: 'Debt-to-Equity', threshold: 2.0, type: 'max' }
@@ -53,22 +56,23 @@ function AiCovenantTracking() {
         <p style={{ color: '#64748b', margin: '4px 0 0' }}>Monitor debt covenant compliance and breach risk</p>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} data-full-ai-workspace="AiCovenantTracking">
+        <FullAIExamples controller={fullAIExamples} disabled={loading} />
         <div className="card" style={{ padding: '24px', marginBottom: '16px' }}>
           <h3>Covenants</h3>
           {covenants.map((c, i) => (
             <div key={i} style={{ display: 'flex', gap: '12px', marginBottom: '8px', alignItems: 'flex-end' }}>
               <div className="form-group" style={{ flex: 2 }}>
                 <label>Name</label>
-                <input value={c.name} onChange={(e) => updateCovenant(i, 'name', e.target.value)} required />
+                <input value={c.name} onChange={(e) => updateCovenant(i, 'name', e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: c.name, change: (e) => updateCovenant(i, 'name', e.target.value), label: "covenant name", samples: [c.name, c.name, c.name] }, "covenant-name", i)} required />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Threshold</label>
-                <input type="number" step="0.01" value={c.threshold} onChange={(e) => updateCovenant(i, 'threshold', e.target.value)} />
+                <input type="number" step="0.01" value={c.threshold} onChange={(e) => updateCovenant(i, 'threshold', e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: c.threshold, change: (e) => updateCovenant(i, 'threshold', e.target.value), label: "covenant threshold", samples: [c.threshold, Number((c.threshold * 1.1).toFixed(2)), Number((c.threshold * 0.9).toFixed(2))] }, "covenant-threshold", i)} />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Type</label>
-                <select value={c.type} onChange={(e) => updateCovenant(i, 'type', e.target.value)}>
+                <select value={c.type} onChange={(e) => updateCovenant(i, 'type', e.target.value)} data-full-ai-field={fullAIExamples.bind({ current: c.type, change: (e) => updateCovenant(i, 'type', e.target.value), label: "covenant type", sample: 'min' }, "covenant-type", i)}>
                   <option value="min">Minimum</option>
                   <option value="max">Maximum</option>
                 </select>
@@ -86,7 +90,7 @@ function AiCovenantTracking() {
               <div key={k} className="form-group">
                 <label>{k}</label>
                 <input type="number" value={financials[k]}
-                  onChange={(e) => setFinancials({ ...financials, [k]: Number(e.target.value) })} />
+                  onChange={(e) => setFinancials({ ...financials, [k]: Number(e.target.value) })} data-full-ai-field={fullAIExamples.bind({ current: financials[k], change: (e) => setFinancials(prev => ({ ...prev, [k]: Number(e.target.value) })), label: k, samples: [financials[k], Math.round(financials[k] * 0.9), Math.round(financials[k] * 1.1)] }, `financial-${k}`)} />
               </div>
             ))}
           </div>
@@ -137,7 +141,7 @@ function AiCovenantTracking() {
               </tbody>
             </table>
           ) : (
-            <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{JSON.stringify(result, null, 2)}</pre>
+            <FormattedAIReport response={result} />
           )}
           {data.summary && (
             <div style={{ marginTop: 16, padding: 16, background: '#fffbeb', borderLeft: '4px solid #f59e0b', borderRadius: 4 }}>
