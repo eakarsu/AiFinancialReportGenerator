@@ -16,7 +16,10 @@ const path = require('path');
 let pool = null;
 try { pool = require('../src/config/database'); } catch (_) { pool = null; }
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-insecure-secret-do-not-use-in-prod';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be set to at least 32 random characters');
+}
 
 // Lightweight JWT auth: verify token; do not require DB user record.
 // (The shared authMiddleware does a DB lookup that fails for the demo user.)

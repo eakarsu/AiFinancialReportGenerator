@@ -44,6 +44,8 @@ const recordRoutes={
 };
 for(const [path,name] of Object.entries(recordRoutes)) app.use(`/api/${path}`,authenticate,require(`./routes/${name}`));
 app.use('/api/ai',authenticate,require('./routes/ai'));
+const featurePackPool=require('./config/database');
+app.use('/api/featurepack',authenticate,require('../featurepack').createFeaturePackRouter({listRecords:async()=>(await featurePackPool.query('SELECT * FROM companies ORDER BY created_at DESC LIMIT 200')).rows}));
 app.use((_req,res)=>res.status(404).json({error:'ROUTE_NOT_SUPPORTED'}));
 app.use((error,_req,res,_next)=>{console.error('Request failed:',error.message);res.status(500).json({error:'INTERNAL_SERVER_ERROR'});});
 app.listen(port,()=>console.log(`Governed financial-report API listening on ${port}`));
